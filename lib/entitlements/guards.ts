@@ -15,7 +15,6 @@ import { planFeatureMissing, planLimitReached, workspaceStatusBlocked } from './
 import {
   FREE_WORKSPACES_KEY,
   LIMIT_KEYS,
-  SnapshotWireSchema,
   decideLimit,
   decideStatus,
   hasFeature,
@@ -26,7 +25,7 @@ import {
   type LimitKey,
 } from './snapshot';
 import { statusExemptionsOf } from './statusGate';
-import { loadDefaultSnapshot, loadEffectiveSnapshot } from './store';
+import { loadDefaultSnapshot, loadEffectiveSnapshot, readWorkspaceSnapshot } from './store';
 import { countUsage } from './usage';
 
 const lockScope = (key: string) => `entitlements:${key}`;
@@ -136,12 +135,12 @@ export async function assertFreeWorkspaceAvailable(tx: Tx, userId: string): Prom
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockScope(FREE_WORKSPACES_KEY)}), hashtext(${userId}))`;
   const owned = await tx.workspaceUser.findMany({
     where: { userId, role: 'OWNER', workspace: { isDemo: false, template: { is: null } } },
-    select: { workspace: { select: { entitlement: { select: { snapshot: true } } } } },
+    select: { workspace: { select: { entitlement: { select: { version: true, hash: true, snapshot: true } } } } },
   });
-  const free = owned.filter(({ workspace }) => {
-    const parsed = workspace.entitlement ? SnapshotWireSchema.safeParse(workspace.entitlement.snapshot) : null;
-    return isFreeWorkspace(parsed?.success ? parsed.data.planKey : null, instanceDefault.planKey);
-  }).length;
+  // An own snapshot with an unreadable plan key does not count as free (it is no longer known to be the default plan).
+  const free = owned.filter(({ workspace }) =>
+    isFreeWorkspace(workspace.entitlement ? readWorkspaceSnapshot(workspace.entitlement).snapshot.planKey : null, instanceDefault.planKey),
+  ).length;
   const decision = decideLimit(limit, free, free + 1);
   if (!decision.allowed) throw planLimitReached(FREE_WORKSPACES_KEY, decision.limit, decision.current);
 }

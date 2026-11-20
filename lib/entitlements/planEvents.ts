@@ -9,6 +9,8 @@ export type PlanErrorCode = (typeof PLAN_ERROR_CODES)[number];
 export interface PlanErrorEvent {
   code: PlanErrorCode;
   details: PlanErrorDetails | null;
+  /** The refused request was a read (`GET`/`HEAD`), e.g. one the page or the app shell makes in the background. */
+  read: boolean;
 }
 
 type Listener = (event: PlanErrorEvent) => void;
@@ -27,17 +29,19 @@ function toDetails(issues: unknown): PlanErrorDetails | null {
   return { key: record.key, limit: number(record.limit), current: number(record.current) };
 }
 
+const isRead = (method: string | undefined) => ['GET', 'HEAD'].includes((method ?? 'GET').toUpperCase());
+
 /** Reports a failed response; only 402 responses with a plan error code reach the listeners. */
-export function reportPlanError(status: number, code: unknown, issues: unknown): void {
+export function reportPlanError(status: number, code: unknown, issues: unknown, method?: string): void {
   if (status !== 402 || !isPlanErrorCode(code)) return;
-  const event: PlanErrorEvent = { code, details: toDetails(issues) };
+  const event: PlanErrorEvent = { code, details: toDetails(issues), read: isRead(method) };
   for (const listener of listeners) listener(event);
 }
 
-/** For raw `fetch` callers: reports a parsed v1 error body (`{ error: { code, issues } }`) like `apiV1Fetch` does. */
-export function reportPlanErrorResponse(status: number, body: unknown): void {
+/** For raw `fetch` callers (writes): reports a parsed v1 error body (`{ error: { code, issues } }`) like `apiV1Fetch` does. */
+export function reportPlanErrorResponse(status: number, body: unknown, method = 'POST'): void {
   const error = body && typeof body === 'object' ? (body as { error?: { code?: unknown; issues?: unknown } }).error : undefined;
-  reportPlanError(status, error?.code, error?.issues);
+  reportPlanError(status, error?.code, error?.issues, method);
 }
 
 export function onPlanError(listener: Listener): () => void {

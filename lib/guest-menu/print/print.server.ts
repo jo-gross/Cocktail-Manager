@@ -216,14 +216,15 @@ export async function buildTableTentHtml(workspace: Workspace, menu: GuestMenu, 
 
   const title = translateGuestText('print.tableTentTitle', uiLocale, {}, overrides);
   const hint = translateGuestText('print.tableTentHint', uiLocale, {}, overrides);
+  // Without branding (always with `ENTITLEMENTS_MODE=off`) the document is exactly the one of self-hosted instances.
+  const branding = (await showPoweredBy(workspace.id)) ? `\n${poweredByHtml(uiLocale)}` : '';
   const body = `<div class="tt">
 <div class="tt-head">${logo ? `<img class="tt-logo" src="${escapeHtml(logo)}" alt="">` : ''}<p class="tt-bar">${escapeHtml(workspace.name)}</p></div>
 <h1 class="tt-title">${escapeHtml(title)}</h1>
 <div class="tt-qr">${await qrSvg(url)}</div>
-<div><p class="tt-hint">${escapeHtml(hint)}</p><p class="tt-url">${escapeHtml(url.replace(/^https?:\/\//, ''))}</p></div>
-${(await showPoweredBy(workspace.id)) ? poweredByHtml(uiLocale) : ''}
+<div><p class="tt-hint">${escapeHtml(hint)}</p><p class="tt-url">${escapeHtml(url.replace(/^https?:\/\//, ''))}</p></div>${branding}
 </div>`;
-  const html = wrapDocument({ lang: uiLocale, title: `${workspace.name} – ${title}`, css: [fontCss, css, POWERED_BY_PRINT_CSS], body });
+  const html = wrapDocument({ lang: uiLocale, title: `${workspace.name} – ${title}`, css: [fontCss, css, branding ? POWERED_BY_PRINT_CSS : ''], body });
   return {
     html,
     paper,

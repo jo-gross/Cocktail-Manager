@@ -6,7 +6,8 @@
  * Exempt routes (docs/ENTITLEMENTS.md "Status"):
  * - exports (backup, JSON, PDF): `READ_ONLY` and `SUSPENDED`
  * - leaving the workspace, deleting the workspace: `READ_ONLY` and `SUSPENDED`
- * - status view (`GET` workspace, `GET` entitlement): `SUSPENDED` (reads are open in `READ_ONLY` anyway)
+ * - status view and the reads of the app shell on every workspace load (`GET` workspace, `GET` entitlement, `GET`
+ *   translations, `GET` announcements): `SUSPENDED` (reads are open in `READ_ONLY` anyway)
  * - portal handoff (`POST …/portal/handoff`): `READ_ONLY` and `SUSPENDED` (paying must stay possible), `HANDOFF_STATUS_EXEMPTION`
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -21,7 +22,7 @@ type RequestHandler = (req: NextApiRequest, res: NextApiResponse) => unknown;
 
 /** Every restricted status: exports, leaving and deleting. */
 export const ALWAYS_AVAILABLE: readonly RestrictedStatus[] = ['READ_ONLY', 'SUSPENDED'];
-/** The status view a suspended workspace still shows. */
+/** The status view a suspended workspace still shows, and the reads of the app shell on every workspace load. */
 export const STATUS_VIEW: readonly RestrictedStatus[] = ['SUSPENDED'];
 /** Data exports (backup, JSON, PDF, print HTML) stay available in every status. */
 export const EXPORT_STATUS_EXEMPTION: StatusExemptions = { GET: ALWAYS_AVAILABLE, POST: ALWAYS_AVAILABLE };

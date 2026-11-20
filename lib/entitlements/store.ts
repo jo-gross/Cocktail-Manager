@@ -7,7 +7,7 @@ import { Prisma } from '@generated/prisma/client';
 import prisma from '../../prisma/prisma';
 import type { Db } from '@lib/db/tx';
 import { entitlementsMode } from '@lib/instance/config';
-import { effectiveSnapshot, SnapshotWireSchema, type EffectiveSnapshot, type SnapshotWire } from './snapshot';
+import { effectiveSnapshot, readStoredSnapshot, type EffectiveSnapshot, type SnapshotWire, type StoredSnapshot } from './snapshot';
 
 export const DEFAULT_SNAPSHOT_SETTING = 'entitlements.default';
 
@@ -18,27 +18,42 @@ export interface StoredDefault {
 
 let warnedInvalidStoredSnapshot = false;
 
-/** Stored JSON → snapshot. Rows are validated on write; an unreadable row counts as missing and is logged once. */
-function readSnapshot(value: Prisma.JsonValue | undefined | null): SnapshotWire | null {
+/**
+ * Stored JSON → snapshot, read leniently (`readStoredSnapshot`): valid fields are kept, unreadable ones count as
+ * unrestricted. Logged once per process, with the field names only.
+ */
+function readSnapshot(value: Prisma.JsonValue | undefined | null, columns?: { version: number; hash: string }): StoredSnapshot | null {
   if (value === undefined || value === null) return null;
-  const parsed = SnapshotWireSchema.safeParse(value);
-  if (parsed.success) return parsed.data;
-  if (!warnedInvalidStoredSnapshot) {
+  const stored = readStoredSnapshot(value, columns);
+  if ((!stored || stored.invalidFields.length > 0) && !warnedInvalidStoredSnapshot) {
     warnedInvalidStoredSnapshot = true;
-    console.error('[entitlements] A stored entitlement snapshot is invalid and is ignored until the control plane pushes a new one.');
+    const fields = stored ? stored.invalidFields.join(', ') : 'all';
+    console.error(
+      `[entitlements] A stored entitlement snapshot has invalid fields (${fields}); they count as unrestricted until the control plane pushes a new snapshot.`,
+    );
   }
-  return null;
+  return stored;
 }
 
-export async function loadDefaultSnapshot(db: Db = prisma): Promise<SnapshotWire | null> {
+export async function loadStoredDefault(db: Db = prisma): Promise<StoredSnapshot | null> {
   const row = await db.instanceSetting.findUnique({ where: { key: DEFAULT_SNAPSHOT_SETTING } });
   const value = row?.value as { snapshot?: Prisma.JsonValue } | null | undefined;
   return readSnapshot(value?.snapshot);
 }
 
+export async function loadDefaultSnapshot(db: Db = prisma): Promise<SnapshotWire | null> {
+  return (await loadStoredDefault(db))?.snapshot ?? null;
+}
+
+/** Stored snapshot of a workspace; `version` and `hash` come from their columns. */
+export function readWorkspaceSnapshot(row: { version: number; hash: string; snapshot: Prisma.JsonValue }): StoredSnapshot {
+  // A row always yields a snapshot: even an unreadable one must not fall back to the instance default.
+  return readSnapshot(row.snapshot, { version: row.version, hash: row.hash }) ?? readStoredSnapshot({}, { version: row.version, hash: row.hash })!;
+}
+
 export async function loadWorkspaceSnapshot(workspaceId: string, db: Db = prisma): Promise<SnapshotWire | null> {
-  const row = await db.workspaceEntitlement.findUnique({ where: { workspaceId }, select: { snapshot: true } });
-  return readSnapshot(row?.snapshot);
+  const row = await db.workspaceEntitlement.findUnique({ where: { workspaceId }, select: { version: true, hash: true, snapshot: true } });
+  return row ? readWorkspaceSnapshot(row).snapshot : null;
 }
 
 /**

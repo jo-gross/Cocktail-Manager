@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { WorkspaceEntitlementDto } from '@lib/schemas/entitlements';
 import { getWorkspaceEntitlement } from '@lib/network/entitlements';
+import { useEntitlementsMode } from '@lib/network/entitlementsMode';
 
 export interface PlanContextValue {
   workspaceId: string | null;
@@ -15,15 +16,19 @@ export function usePlan(): PlanContextValue {
   return useContext(PlanContext);
 }
 
-/** Loads the plan of the current workspace once per workspace (and on `refresh`). */
+/**
+ * Loads the plan of the current workspace once per workspace (and on `refresh`). Only with `ENTITLEMENTS_MODE=managed`:
+ * self-hosted instances (`off`) never request it.
+ */
 export function PlanProvider({ workspaceId, children }: { workspaceId: string | null; children: React.ReactNode }) {
+  const mode = useEntitlementsMode(workspaceId !== null);
   // Keyed by workspace, so switching workspaces never shows the plan of the previous one.
   const [loaded, setLoaded] = useState<{ workspaceId: string; entitlement: WorkspaceEntitlementDto } | null>(null);
   const [version, setVersion] = useState(0);
   const refresh = useCallback(() => setVersion((value) => value + 1), []);
 
   useEffect(() => {
-    if (!workspaceId) return;
+    if (!workspaceId || mode !== 'managed') return;
     const controller = new AbortController();
     getWorkspaceEntitlement(workspaceId, controller.signal)
       .then((entitlement) => setLoaded({ workspaceId, entitlement }))
@@ -32,7 +37,7 @@ export function PlanProvider({ workspaceId, children }: { workspaceId: string | 
         if (!controller.signal.aborted) console.error('PlanProvider -> getWorkspaceEntitlement', error);
       });
     return () => controller.abort();
-  }, [workspaceId, version]);
+  }, [workspaceId, version, mode]);
 
   const entitlement = workspaceId && loaded?.workspaceId === workspaceId ? loaded.entitlement : null;
   return <PlanContext.Provider value={{ workspaceId, entitlement, refresh }}>{children}</PlanContext.Provider>;

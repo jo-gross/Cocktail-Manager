@@ -98,7 +98,7 @@ const exportJsonRoutes = withHttpMethods({
     async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
       const parsed = CocktailExportJsonSchema.safeParse(req.body ?? {});
       if (!parsed.success) return sendInvalidBody(res, parsed.error.issues);
-      const result = await cocktailsPorting.exportCocktailsJson(workspace, parsed.data.cocktailIds);
+      const result = await cocktailsPorting.exportCocktailsJson(workspace, parsed.data.all ? 'all' : parsed.data.cocktailIds!);
       return res.status(result.status).json(result.body);
     },
   ),

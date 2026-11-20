@@ -297,14 +297,14 @@ export async function assignCalculationsToGroup(workspace: Workspace, input: Cal
  * (matching the legacy endpoint exactly).
  */
 export async function exportCalculationsJson(workspace: Workspace, input: CalculationExportJsonInput): Promise<unknown> {
-  const { ids } = input;
+  const { ids, all } = input;
 
-  if (!ids || ids.length === 0) {
+  if (!all && (!ids || ids.length === 0)) {
     throw new ApiError(400, 'NO_CALCULATIONS_SELECTED', 'No calculations selected');
   }
 
   const calculations = await prisma.cocktailCalculation.findMany({
-    where: { id: { in: ids }, workspaceId: workspace.id },
+    where: all ? { workspaceId: workspace.id } : { id: { in: ids }, workspaceId: workspace.id },
     include: {
       group: true,
       cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },

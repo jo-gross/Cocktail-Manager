@@ -95,9 +95,67 @@ export function effectiveSnapshot(mode: EntitlementsMode, workspace: SnapshotWir
   return null;
 }
 
-/** Version rule of the contract: a push applies only when its version is higher than the stored one. */
-export function shouldApply(currentVersion: number | null, incomingVersion: number): boolean {
+/**
+ * Version rule of the contract: a push applies only when its version is higher than the stored one. A stored snapshot
+ * that no longer parses (`currentReadable: false`) is also replaced by a push of the same version.
+ */
+export function shouldApply(currentVersion: number | null, incomingVersion: number, currentReadable = true): boolean {
+  if (!currentReadable) return incomingVersion >= (currentVersion ?? 0);
   return incomingVersion > (currentVersion ?? 0);
+}
+
+export interface StoredSnapshot {
+  snapshot: SnapshotWire;
+  /** Names of the fields that did not parse (no values), empty when the stored snapshot is valid. */
+  invalidFields: string[];
+}
+
+/**
+ * Lenient read of a stored snapshot (rows are validated on write, but a newer app may validate stricter). Every valid
+ * known field is kept; a field that does not parse counts as unrestricted (limit `null`, status `ACTIVE`, the known
+ * features, `billing: contact`), like a workspace before its first push. A paid workspace therefore never drops to the
+ * free default because one field is unreadable. `null` only for a value that is not an object.
+ */
+export function readStoredSnapshot(value: unknown, columns: { version?: number; hash?: string } = {}): StoredSnapshot | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const strict = SnapshotWireSchema.safeParse(value);
+  if (strict.success) return { snapshot: strict.data, invalidFields: [] };
+
+  const record = value as Record<string, unknown>;
+  const invalidFields: string[] = [];
+  const field = <S extends z.ZodType>(name: keyof SnapshotWire, schema: S, fallback: z.infer<S>, source: unknown = record[name]): z.infer<S> => {
+    const parsed = schema.safeParse(source);
+    if (parsed.success) return parsed.data;
+    invalidFields.push(name);
+    return fallback;
+  };
+  const shape = SnapshotWireSchema.shape;
+
+  const version = columns.version ?? field('version', shape.version, 0);
+  const hash = columns.hash ?? field('hash', shape.hash, '');
+  const planKey = field('planKey', shape.planKey, '');
+  const planName = field('planName', shape.planName, { de: planKey || '–', en: planKey || '–' });
+  const status = field('status', shape.status, 'ACTIVE');
+  const rawLimits = record.limits && typeof record.limits === 'object' && !Array.isArray(record.limits) ? (record.limits as Record<string, unknown>) : {};
+  const limits = Object.fromEntries(
+    LIMIT_KEYS.map((key) => {
+      const parsed = LimitValue.safeParse(rawLimits[key]);
+      if (!parsed.success) invalidFields.push(`limits.${key}`);
+      return [key, parsed.success ? parsed.data : null];
+    }),
+  ) as SnapshotLimits;
+  const features = Array.isArray(record.features)
+    ? record.features.filter((feature): feature is string => {
+        const ok = typeof feature === 'string' && feature.length >= 1 && feature.length <= 100;
+        if (!ok && !invalidFields.includes('features')) invalidFields.push('features');
+        return ok;
+      })
+    : field('features', shape.features, [...FEATURE_KEYS]);
+  const billing = field('billing', shape.billing, 'contact');
+  const nextChangeAt = field('nextChangeAt', shape.nextChangeAt, null);
+  const scheduledEnd = field('scheduledEnd', shape.scheduledEnd, null) ?? null;
+
+  return { snapshot: { version, hash, planKey, planName, status, limits, features, billing, nextChangeAt, scheduledEnd }, invalidFields };
 }
 
 export function hasFeature(effective: EffectiveSnapshot | null, feature: FeatureKey): boolean {

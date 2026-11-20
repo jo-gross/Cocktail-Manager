@@ -76,17 +76,18 @@ function parseTranslations(raw: string | null | undefined, fallback: Record<stri
 // Export JSON
 // ---------------------------------------------------------------------------
 
-export async function exportCocktailsJson(workspace: Workspace, cocktailIds: string[]): Promise<PortingResult> {
+/** `'all'`: every cocktail of the workspace (the export of a suspended workspace, docs/ENTITLEMENTS.md). */
+export async function exportCocktailsJson(workspace: Workspace, cocktailIds: string[] | 'all'): Promise<PortingResult> {
   const workspaceId = workspace.id;
 
-  if (cocktailIds.length === 0) {
+  if (cocktailIds !== 'all' && cocktailIds.length === 0) {
     return { status: 400, body: portingError('VALIDATION_ERROR', 'No cocktails selected') };
   }
 
   // One consistent snapshot over all tables.
   const exportData = await runTx(
     async (tx): Promise<CocktailExportStructure | null> => {
-      const cocktailRecipes = await tx.cocktailRecipe.findMany({ where: { id: { in: cocktailIds }, workspaceId } });
+      const cocktailRecipes = await tx.cocktailRecipe.findMany({ where: cocktailIds === 'all' ? { workspaceId } : { id: { in: cocktailIds }, workspaceId } });
       if (cocktailRecipes.length === 0) return null;
       const recipeIds = cocktailRecipes.map((r) => r.id);
 

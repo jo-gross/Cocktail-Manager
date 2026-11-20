@@ -49,9 +49,14 @@
   },
   "suspended": {
     "title": "Workspace suspended",
-    "text": "This workspace is suspended. You can export your data, leave the workspace or delete it.",
-    "export": "Export data",
-    "leaveOrDelete": "Leave or delete"
+    "text": "This workspace is suspended. You can export your data or leave the workspace; owners can also delete it.",
+    "export": "Full backup",
+    "exports": {
+      "cocktails": "Export cocktails (JSON)",
+      "calculations": "Export calculations (JSON)"
+    },
+    "leaveOrDelete": "Leave or delete",
+    "leave": "Leave workspace"
   },
   "dialog": {
     "limitTitle": "Limit reached",

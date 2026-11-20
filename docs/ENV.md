@@ -128,7 +128,8 @@ Self-hosted instances leave both unset. `ENTITLEMENTS_MODE` is reported as `enti
 revocation, workspace deletion) to the control plane, enforces the plan snapshots the control plane pushes (limits,
 features, workspace status) and shows the plan UI; until the first push nothing is limited. See
 [Entitlements](ENTITLEMENTS.md). Values other than `off` and `managed` (case-insensitive) count as `off` and are logged
-once at runtime as a warning.
+once at runtime as a warning. The browser reads the mode at runtime from `GET /api/config/entitlements` (public, cached
+five minutes, no database access); with `off` it requests no plan and no announcements.
 `ENTITLEMENTS_FREE_WORKSPACES_PER_OWNER` takes a non-negative integer; other values count as unlimited. It applies only
 after the control plane pushed a default snapshot.
 

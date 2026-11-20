@@ -49,9 +49,14 @@
   },
   "suspended": {
     "title": "Workspace gesperrt",
-    "text": "Dieser Workspace ist gesperrt. Du kannst deine Daten exportieren, den Workspace verlassen oder ihn löschen.",
-    "export": "Daten exportieren",
-    "leaveOrDelete": "Verlassen oder löschen"
+    "text": "Dieser Workspace ist gesperrt. Du kannst deine Daten exportieren oder den Workspace verlassen; Inhaberinnen und Inhaber können ihn auch löschen.",
+    "export": "Komplettes Backup",
+    "exports": {
+      "cocktails": "Cocktails exportieren (JSON)",
+      "calculations": "Kalkulationen exportieren (JSON)"
+    },
+    "leaveOrDelete": "Verlassen oder löschen",
+    "leave": "Workspace verlassen"
   },
   "dialog": {
     "limitTitle": "Limit erreicht",

@@ -49,12 +49,16 @@ export default function SignagePage() {
       }
       const keyQuery = signageKey ? `&key=${encodeURIComponent(signageKey)}` : '';
       fetch(`/api/signage/${id}?format=${format}${keyQuery}`)
-        .then(async (response) => {
-          setPlanRequired(response.status === 402);
-          setUnavailable(response.status === 503);
-          return response.json();
-        })
-        .then((data) => {
+        .then((response) => response.json().then((data) => ({ status: response.status, data })))
+        .then(({ status, data }) => {
+          // Only the feed's own answers switch the view; any other failure (e.g. a 503 page of a reverse proxy during
+          // a restart) keeps the slides, as before.
+          const code = data?.error?.code;
+          const isUnavailable = status === 503 && code === 'WORKSPACE_UNAVAILABLE';
+          const isPlanRequired = status === 402 && code === 'PLAN_FEATURE_MISSING';
+          setUnavailable(isUnavailable);
+          setPlanRequired(isPlanRequired);
+          if (isUnavailable || isPlanRequired) return;
           setContent(data.content);
         })
         .catch((error) => {

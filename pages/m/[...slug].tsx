@@ -59,8 +59,9 @@ type PageProps =
       noindex: boolean;
       initialState: ShellUrlState;
       langFromQuery: boolean;
-      /** Hosted instances: "Powered by" unless the plan includes `branding.remove`. */
-      poweredBy: boolean;
+      /** Hosted instances: "Powered by" unless the plan includes `branding.remove`. Only set when shown, so the page data of
+       *  self-hosted instances stays unchanged. */
+      poweredBy?: true;
     };
 
 function first(value: string | string[] | undefined): string | undefined {
@@ -204,7 +205,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (context)
     noindex,
     initialState: parseShellUrlState(new URLSearchParams(Object.entries(query).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : []))).toString()),
     langFromQuery: !!lang,
-    poweredBy: await showPoweredBy(result.workspace.id),
+    ...((await showPoweredBy(result.workspace.id)) ? { poweredBy: true as const } : {}),
   };
   // Props must be JSON-serializable (no `undefined`).
   return { props: JSON.parse(JSON.stringify(props)) as PageProps };

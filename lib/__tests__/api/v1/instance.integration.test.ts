@@ -154,8 +154,16 @@ describe('GET /api/v1/instance/workspaces', () => {
       data: { workspaceId: seeded.workspace.id, entityType: 'Cocktail', entityId: 'x', action: 'UPDATE', createdAt: new Date('2026-02-01T10:00:00.000Z') },
     });
     const empty = await seedWorkspace({ name: 'Empty Bar', users: [] });
+    // Only audit log entries: the newest one is the activity (read per workspace from the index, exact to the ms).
+    const logged = await seedWorkspace({ name: 'Logged Bar', users: [] });
+    for (const createdAt of ['2026-01-05T08:00:00.123Z', '2026-04-02T09:30:00.456Z', '2025-12-24T18:00:00.000Z']) {
+      await prisma.auditLog.create({
+        data: { workspaceId: logged.workspace.id, entityType: 'Cocktail', entityId: 'x', action: 'UPDATE', createdAt: new Date(createdAt) },
+      });
+    }
 
     const page = pageOf(await listWorkspaces());
+    expect(page.data.find((item) => item.id === logged.workspace.id)!.lastActivityAt).toBe('2026-04-02T09:30:00.456Z');
     const usageBar = page.data.find((item) => item.id === seeded.workspace.id)!;
     expect(usageBar).toMatchObject({
       name: 'Usage Bar',
@@ -246,7 +254,7 @@ describe('GET /api/v1/instance/workspaces', () => {
     expect(pageOf(await listWorkspaces({ q: 'no-match-anywhere' })).data).toEqual([]);
   });
 
-  it('updatedSince returns workspaces whose members, roles, member names or settings changed, not content or visits', async () => {
+  it('updatedSince returns workspaces whose members, roles or settings changed, not content, visits or member names', async () => {
     const a = await seedWorkspace({ name: 'A', users: [{ role: 'OWNER' }, { role: 'USER' }] });
     const b = await seedWorkspace({ name: 'B', users: [{ role: 'OWNER' }] });
     const c = await seedWorkspace({ name: 'C', users: [{ role: 'OWNER' }] });
@@ -285,9 +293,10 @@ describe('GET /api/v1/instance/workspaces', () => {
 
     since = await watermark();
     await prisma.workspaceSetting.create({ data: { workspaceId: b.workspace.id, setting: 'currency', value: 'EUR' } });
-    await prisma.user.update({ where: { id: roleUser(c, 'OWNER').user.id }, data: { name: 'Renamed Owner' } });
     await prisma.workspace.update({ where: { id: d.workspace.id }, data: { name: 'D2' } });
-    expect(await changedSince(since)).toEqual(['B', 'C', 'D2']);
+    // Name and email of members are not covered (no trigger on `User`); the daily full listing picks them up.
+    await prisma.user.update({ where: { id: roleUser(c, 'OWNER').user.id }, data: { name: 'Renamed Owner', email: `renamed-${c.workspace.id}@test.local` } });
+    expect(await changedSince(since)).toEqual(['B', 'D2']);
 
     since = await watermark();
     await prisma.workspaceUser.delete({ where: { workspaceId_userId: { workspaceId: a.workspace.id, userId: roleUser(a, 'USER').user.id } } });

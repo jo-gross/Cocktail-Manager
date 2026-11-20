@@ -226,10 +226,11 @@ model Workspace {
   signageKey                        String?
   /// null = setup assistant not completed
   setupCompletedAt                  DateTime?
-  createdAt                         DateTime                            @default(now())
-  /// Last change the control plane mirrors (workspace row, members and roles, member name/email, settings, template mark).
+  /// Defaults in UTC independent of the session time zone (migration 20261119004919_workspace_timestamps).
+  createdAt                         DateTime                            @default(dbgenerated("timezone('UTC'::text, now())"))
+  /// Last change the control plane mirrors (workspace row, members and roles, settings, template mark; not member names).
   /// Database triggers keep it current (migration 20261119004919_workspace_timestamps), see docs/INSTANCE-API.md.
-  updatedAt                         DateTime                            @default(now()) @updatedAt
+  updatedAt                         DateTime                            @default(dbgenerated("timezone('UTC'::text, now())")) @updatedAt
   template                          WorkspaceTemplate?
   users                             WorkspaceUser[]
   Glass                             Glass[]
@@ -830,6 +831,7 @@ model AuditLog {
   createdAt   DateTime  @default(now())
 
   @@index([workspaceId])
+  @@index([workspaceId, createdAt])
   @@index([entityId])
   @@index([entityType])
 }

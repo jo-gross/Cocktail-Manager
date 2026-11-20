@@ -83,7 +83,7 @@ export async function apiV1Fetch<T>(path: string, init?: RequestInit): Promise<T
   if (!response.ok) {
     const error = (body?.error ?? {}) as Partial<ApiV1ErrorBody>;
     // 402 from the plan guards opens the plan dialog (hosted instances only).
-    reportPlanError(response.status, error.code, error.issues);
+    reportPlanError(response.status, error.code, error.issues, init?.method);
     throw new ApiV1RequestError(response.status, error.code ?? 'ERROR', error.message ?? response.statusText, error.issues);
   }
 
@@ -101,7 +101,7 @@ export async function apiV1FetchPaginated<T>(path: string, init?: RequestInit): 
   if (!response.ok) {
     const error = (body?.error ?? {}) as Partial<ApiV1ErrorBody>;
     // 402 from the plan guards opens the plan dialog (hosted instances only).
-    reportPlanError(response.status, error.code, error.issues);
+    reportPlanError(response.status, error.code, error.issues, init?.method);
     throw new ApiV1RequestError(response.status, error.code ?? 'ERROR', error.message ?? response.statusText, error.issues);
   }
 

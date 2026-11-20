@@ -32,7 +32,8 @@ subscription has ended.
 | `PUT /api/v1/instance/workspaces/{id}/entitlements` | `WorkspaceEntitlement` (version, hash, snapshot, applied at) and an audit log entry of the workspace |
 
 - **Version rule:** a push is stored only when its `version` is higher than the stored one. Otherwise the answer is
-  `200` with `applied: false`. The answer always carries `currentVersion` and `currentHash` of what the app holds now
+  `200` with `applied: false`. Exception: a stored snapshot that no longer parses (see *Stored snapshots*) is also
+  replaced by a push of the same version. The answer always carries `currentVersion` and `currentHash` of what the app holds now
   (`0`/`null` without a snapshot). Pushes of one workspace (or of the default) are serialized by an advisory lock.
 - **Audit and `Idempotency-Key`:** both pushes run through `runControlPlaneWrite` (`lib/instance/controlPlaneWrite.ts`),
   like every control plane write: the change, an `InstanceAuditLog` entry (`entitlements.default` or
@@ -44,6 +45,12 @@ subscription has ended.
   previous version, plan and status), like the ownership transfer of the control plane, so the workspace history shows
   plan changes.
 - The workspace inventory of the instance API reports the stored snapshot as `entitlement: { version, hash, planKey }`.
+- **Stored snapshots** are read leniently (`readStoredSnapshot` in `snapshot.ts`): rows are validated on write, but a
+  newer app may validate stricter or a row may have been edited. Every valid known field is kept; a field that does not
+  parse counts as unrestricted (limit `null`, status `ACTIVE`, the known features, `billing: contact`), like a workspace
+  before its first push. A workspace with an unreadable snapshot therefore never falls back to the (free) instance
+  default. The app logs this once per process with the field names only, never values; the control plane's next push
+  of the same version repairs it.
 - `GET /api/v1/instance` lists the capability `entitlements` only with `ENTITLEMENTS_MODE=managed`, so the control
   plane does not push to an instance that would ignore it (it then marks the pushes as waiting).
 
@@ -111,7 +118,7 @@ workspace API keys. The instance master key (operator access of the control plan
 | `ACTIVE` | normal |
 | `GRACE` | normal, plus a warning banner |
 | `READ_ONLY` | `GET`/`HEAD`/`OPTIONS` only; other methods answer `402 WORKSPACE_READ_ONLY`. Exceptions: exports, leaving, deleting the workspace, the portal handoff |
-| `SUSPENDED` | every request answers `402 WORKSPACE_SUSPENDED`, reads included. Exceptions: the status view (`GET` workspace, `GET entitlement`), exports, leaving, deleting the workspace, the portal handoff |
+| `SUSPENDED` | every request answers `402 WORKSPACE_SUSPENDED`, reads included. Exceptions: the status view and the reads of the app shell (`GET` workspace, `GET entitlement`, `GET translations`, `GET announcements`), exports, leaving, deleting the workspace, the portal handoff |
 
 Exempt routes wrap their handler with `withStatusExemption` (`lib/entitlements/statusGate.ts`):
 
@@ -119,13 +126,15 @@ Exempt routes wrap their handler with `withStatusExemption` (`lib/entitlements/s
 | --- | :-: | :-: |
 | Exports: `admin/backups/export`, `cocktails/export/json`, `cocktails/export/pdf`, `calculations/export/json`, `glasses/export/json`, `garnishes/export/json`, `ingredients/export/json`, `guest-menus/{menuId}/export/{pdf,html,table-tent.pdf}` | ✓ | ✓ |
 | `POST leave`, `DELETE /api/v1/workspaces/{workspaceId}` | ✓ | ✓ |
-| `GET /api/v1/workspaces/{workspaceId}`, `GET entitlement` | (reads) | ✓ |
+| `GET /api/v1/workspaces/{workspaceId}`, `GET entitlement`, `GET translations`, `GET announcements` (read by the app shell on every workspace load) | (reads) | ✓ |
 | `POST portal/handoff` (`HANDOFF_STATUS_EXEMPTION`), so a customer can pay | ✓ | ✓ |
 
 Public pages: with `SUSPENDED` the guest menu page `/m/…` shows a neutral "currently not available" page (503), the
 public menu JSON `/api/public/menus/…` (also used by signage menu slides and the public `print`/`monitor` outputs) answers
-`503 { status: 'unavailable' }`, and the signage feed answers `503 WORKSPACE_UNAVAILABLE`, which the monitor page shows
-as "currently not available" (de/en). The authenticated guest menu PDF, print HTML and table tent stay available as
+`503 { status: 'unavailable' }`, the public menu images `/api/public/images/…` answer `503 WORKSPACE_UNAVAILABLE` (they
+belong to the menu that is unavailable), and the signage feed answers `503 WORKSPACE_UNAVAILABLE`, which the monitor
+page shows as "currently not available" (de/en). The monitor page reacts only to these answers of the feed (and to
+`402 PLAN_FEATURE_MISSING`); any other failure, e.g. a 503 page of a reverse proxy during a restart, keeps the slides. The authenticated guest menu PDF, print HTML and table tent stay available as
 exports. `READ_ONLY` keeps all public pages working.
 
 ### OpenAPI
@@ -143,19 +152,27 @@ public signage feed.
 without a database query. `portalHandoff` says whether the instance offers the customer portal (see
 [Portal handoff](#portal-handoff)).
 
-UI (only shown with `managed`, German and English, namespace `plan`):
+UI (only shown with `managed`, German and English, namespace `plan`). The browser reads the mode from
+`GET /api/config/entitlements` (public, no database, cached five minutes) once per page load; with `off` it requests
+neither the plan nor announcements, so a self-hosted instance makes no request per workspace open beyond v1.22.
 
 - `PlanBoundary` (mounted in `_app.tsx`): loads the plan of the current workspace, shows the status banner
   (`PlanStatusBanner`, its own component so the announcement banner can stack next to it), opens the limit dialog and
-  replaces the page by a status view while the workspace is suspended (the settings pages *Data* and *Danger zone*
-  stay reachable for export, leaving and deleting; with `billing: portal` the status view also offers "Abo verwalten").
+  replaces the page by a status view while the workspace is suspended. It renders the same tree in every state, so the
+  page is not remounted when the plan loads or the workspace changes. The status view offers every member the export
+  they may run today (all cocktails with their glasses, garnishes and ingredients, and all calculations as JSON, via
+  `all: true` on `POST cocktails/export/json` and `POST calculations/export/json`) and "Workspace verlassen" (`POST
+  leave`; not for the last owner, nor in externally managed workspaces, like the users page). Admins also reach the
+  settings pages *Data* (full backup) and *Danger zone*; with `billing: portal` it offers "Abo verwalten".
 - `PlanCard` on the general settings page: plan name, status, usage against the limits, features and "Abo verwalten"
   (`billing: portal`) or a contact hint (`billing: contact`). With `scheduledEnd` it shows "Dein Abo endet am … Danach
   gilt …" instead of the generic "Nächste Änderung am …" line of `nextChangeAt`. The end date is shown in
   `Europe/Berlin`, like the mail and the portal of the control plane; `nextChangeAt` stays in the browser's time zone.
   "Abo verwalten" (`intent: manage`) is the button of the card header, or sits next to the text when the header has
   none.
-- `PlanLimitDialog`: opens on every 402 of a plan guard that reaches `apiV1Fetch` (`lib/entitlements/planEvents.ts`).
+- `PlanLimitDialog`: opens on every 402 of a plan guard that reaches `apiV1Fetch` (`lib/entitlements/planEvents.ts`),
+  except reads refused with `WORKSPACE_SUSPENDED` (the page and the shell load in the background before the plan is
+  known); those only reload the plan, which then shows the status view.
   Raw `fetch` writes report it with `reportPlanErrorResponse`: the cocktail import wizard (validate and execute), the
   JSON import of glasses/garnishes/ingredients/calculations, the backup import and archive/unarchive on the cocktail
   page. Remaining exceptions: exports (exempt from the status gate), public pages and reads through `fetchWithCache` (a
@@ -220,11 +237,16 @@ access logs of the app.
 
 ## Tests
 
-- Unit: `lib/entitlements/__tests__/` (effective snapshot, version rule, limit and status decisions, plan events,
-  status exemptions, UI components, portal button states and the handoff request), `lib/portal/__tests__/` (the
-  contract's test vector byte for byte, claims, `iss` normalisation, both key spellings, invalid keys, env).
+- Unit: `lib/entitlements/__tests__/` (effective snapshot, version rule, lenient read of stored snapshots, limit and
+  status decisions, plan events, status exemptions, UI components, portal button states and the handoff request;
+  `planShell.test.tsx` renders the shell with a real React root: requests in `off` mode, mounts of the page, the dialog
+  over the status view, leaving), `lib/signage/__tests__/signagePage.test.tsx` (which answers of the feed replace the
+  slides), `lib/portal/__tests__/` (the contract's test vector byte for byte, claims, `iss` normalisation, both key
+  spellings, invalid keys, env).
 - Integration: `lib/__tests__/api/v1/entitlements.integration.test.ts` (pushes, idempotency, validation, auth, every
   guard at the limit boundary, imports, parallel creates, statuses, API keys, `freeWorkspacesPerOwner`, branding,
-  `ENTITLEMENTS_MODE=off`), `lib/__tests__/api/v1/portalHandoff.integration.test.ts` (owner token verifies with the
+  unreadable stored snapshots, `ENTITLEMENTS_MODE=off`: the response bodies of representative routes, public outputs
+  and the table tent stay identical with restrictive snapshots and announcements stored, and no statement touches the
+  entitlement or announcement tables), `lib/__tests__/api/v1/portalHandoff.integration.test.ts` (owner token verifies with the
   public key, claims and lifetime, refused roles, unverified email, API key and master key, other tenants, availability
   per mode and env, `READ_ONLY` and `SUSPENDED`, audit without the token).

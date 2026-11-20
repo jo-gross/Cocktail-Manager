@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { UserContext } from '@lib/context/UserContextProvider';
 import { fetchAnnouncements } from '@lib/network/announcements';
+import { useEntitlementsMode } from '@lib/network/entitlementsMode';
 import { dismiss, readDismissed, type DismissalStorage } from '@lib/announcements/dismissal';
 import type { AnnouncementDto } from '@lib/schemas/announcements';
 import { AnnouncementBannerList } from './AnnouncementBannerList';
@@ -28,19 +29,20 @@ function browserStorage(): DismissalStorage | null {
 
 /**
  * Banner with the active announcements of the hosting provider, on the workspace overview (announcements for all
- * workspaces) and inside a workspace (for all and for this workspace). Self-hosted instances never have
- * announcements, so nothing is rendered there.
+ * workspaces) and inside a workspace (for all and for this workspace). Only with `ENTITLEMENTS_MODE=managed`:
+ * self-hosted instances never have announcements, so they neither request nor poll them.
  */
 export function AnnouncementBanner() {
   const router = useRouter();
   const { user, uiLocale } = useContext(UserContext);
   const scope = user ? announcementScope(router.pathname, router.query.workspaceId) : undefined;
+  const mode = useEntitlementsMode(scope !== undefined);
 
   const [loaded, setLoaded] = useState<{ scope: string | null; announcements: AnnouncementDto[] } | undefined>();
   const [dismissed, setDismissed] = useState<string[]>([]);
 
   useEffect(() => {
-    if (scope === undefined) return;
+    if (scope === undefined || mode !== 'managed') return;
     const controller = new AbortController();
     const load = () => {
       fetchAnnouncements(scope, controller.signal)
@@ -58,14 +60,14 @@ export function AnnouncementBanner() {
       controller.abort();
       window.clearInterval(interval);
     };
-  }, [scope]);
+  }, [scope, mode]);
 
   const onDismiss = useCallback((announcement: AnnouncementDto) => {
     setDismissed((current) => dismiss(browserStorage(), announcement, current));
   }, []);
 
   // Announcements of another scope (previous workspace) are not shown while the new ones load.
-  if (scope === undefined || !loaded || loaded.scope !== scope) return null;
+  if (scope === undefined || mode !== 'managed' || !loaded || loaded.scope !== scope) return null;
   return <AnnouncementBannerList announcements={loaded.announcements} dismissed={dismissed} locale={uiLocale} onDismiss={onDismiss} />;
 }
 

@@ -4,7 +4,8 @@
  *
  * Idempotency: a retry with the same key and the same request gets the stored answer and changes nothing. The same
  * key with another request is refused (409 `IDEMPOTENCY_KEY_REUSED`). Failed writes store nothing, so a retry runs
- * again. Without a key every call is applied. See docs/INSTANCE-API.md.
+ * again. Without a key every call is applied. Stored answers are kept for 30 days, audit entries for 90 days
+ * (`lib/instance/auditRetention.ts`). See docs/INSTANCE-API.md.
  */
 import type { IncomingHttpHeaders } from 'node:http';
 import type { Prisma } from '@generated/prisma/client';
@@ -13,6 +14,7 @@ import { ApiError } from '@lib/http/ApiError';
 import { runTx, type RunTxOptions, type Tx } from '@lib/db/tx';
 import { parseControlPlaneHeaders, type ControlPlaneHeaders } from '@lib/instance/controlPlaneHeaders';
 import { requestFingerprint } from '@lib/instance/fingerprint';
+import { pruneInstanceAuditLogPeriodically } from '@lib/instance/auditRetention';
 
 export type ControlPlaneTargetType = 'instance' | 'workspace' | 'user';
 
@@ -50,8 +52,9 @@ export async function runControlPlaneWrite<T>(write: ControlPlaneWrite<T>): Prom
     if (stored) return stored.response;
   }
 
+  let result: T;
   try {
-    return await runTx(
+    result = await runTx(
       async (tx) => {
         const { response, details } = await write.apply(tx, headers);
         await tx.instanceAuditLog.create({
@@ -80,4 +83,7 @@ export async function runControlPlaneWrite<T>(write: ControlPlaneWrite<T>): Prom
     }
     throw error;
   }
+  // Retention of the audit log (90 days) and the stored answers (30 days), at most hourly (lib/instance/auditRetention.ts).
+  await pruneInstanceAuditLogPeriodically();
+  return result;
 }

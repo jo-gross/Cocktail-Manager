@@ -16,7 +16,20 @@ import {
   archiveHandler,
   unarchiveHandler,
 } from '@lib/api/v1/cocktails';
-import { collectionHandler as calculationsHandler, importJsonHandler as calculationsImportHandler } from '@lib/api/v1/calculations';
+import {
+  collectionHandler as calculationsHandler,
+  exportJsonHandler as calculationsExportHandler,
+  importJsonHandler as calculationsImportHandler,
+} from '@lib/api/v1/calculations';
+import { translationsCollectionHandler } from '@lib/api/v1/translations';
+import {
+  collectionHandler as announcementsHandler,
+  instanceAnnouncementsHandler,
+  workspaceCollectionHandler as workspaceAnnouncementsHandler,
+} from '@lib/api/v1/announcements';
+import { exportHtmlHandler as guestMenuHtmlHandler, itemHandler as guestMenuItemHandler } from '@lib/api/v1/guestMenus';
+import { itemHandler as cocktailItemHandler } from '@lib/api/v1/cocktails';
+import pg from 'pg';
 import { collectionHandler as guestMenusHandler, publishHandler } from '@lib/api/v1/guestMenus';
 import { signageHandler, slidesHandler } from '@lib/api/v1/signage';
 import { collectionHandler as apiKeysHandler } from '@lib/api/v1/apiKeys';
@@ -36,12 +49,13 @@ import { buildTableTentHtml } from '@lib/guest-menu/print/print.server';
 import { loadPublicMenu } from '@lib/guest-menu/public.server';
 import { createDefaultGuestMenuDocument } from '@lib/guest-menu/schema';
 import publicMenusHandler from '../../../../pages/api/public/menus/[...slug]';
+import publicImagesHandler from '../../../../pages/api/public/images/[workspaceSlug]/[kind]/[id]';
 import { EntitlementApplyResultSchema, WorkspaceEntitlementDtoSchema, type WorkspaceEntitlementDto } from '@lib/schemas/entitlements';
 import { InstanceInfoSchema, InstanceWorkspaceDetailSchema, type InstanceWorkspaceSummaryDto } from '@lib/schemas/instance';
 import type { SnapshotWire } from '@lib/entitlements/snapshot';
 import { UNLIMITED, snapshotWire } from '@test/helpers/entitlements';
 import { seedApiKey, seedCocktail, seedGlass, seedWorkspace, type SeededWorkspace } from '@test/helpers/dbFixtures';
-import { calculationExportItem, seedContent } from '@test/helpers/fixtures/g3';
+import { calculationExportItem, seedCalculation, seedContent } from '@test/helpers/fixtures/g3';
 import { callAs, dataOf, errorCodeOf, roleUser, seedTenantPair, type Caller } from '@test/helpers/scenario';
 import type { HandlerResult } from '@test/helpers/invokeHandler';
 
@@ -77,6 +91,24 @@ function expectPlanError(result: HandlerResult, code: string, details?: { key: s
 }
 
 const managed = () => vi.stubEnv('ENTITLEMENTS_MODE', 'managed');
+
+/** Ids of rows created per run and timestamps (visits, export dates) differ between two runs; everything else must not. */
+function normalizeVolatile<T>(value: T): T {
+  const walk = (item: unknown): unknown => {
+    if (Array.isArray(item)) return item.map(walk);
+    if (item && typeof item === 'object') return Object.fromEntries(Object.entries(item).map(([key, entry]) => [key, walk(entry)]));
+    if (typeof item === 'string') {
+      return item
+        .replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?(Z|[+-]\d\d:\d\d)/g, '<timestamp>')
+        .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, '<uuid>');
+    }
+    return item;
+  };
+  return walk(value) as T;
+}
+
+/** 1×1 PNG as stored in `Workspace.image`. */
+const PIXEL_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -346,6 +378,58 @@ describe('GET /api/v1/workspaces/{workspaceId}/entitlement', () => {
 
     await plan(a.workspace.id, { cocktails: 10 }, { billing: 'contact' });
     expect((await get(user, a.workspace.id)).plan).toMatchObject({ planKey: 'test_plan', source: 'workspace', billing: 'contact', limits: { cocktails: 10 } });
+  });
+
+  it('reads an unreadable stored snapshot leniently instead of falling back to the free default; a re-push of the same version applies', async () => {
+    managed();
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { a } = await seedTenantPair();
+    const owner = roleUser(a, 'OWNER');
+    await pushDefault(snapshotWire({ limits: { ...UNLIMITED, cocktails: 0 } }));
+    const paid = snapshotWire({
+      planKey: 'bar_pro',
+      planName: { de: 'Bar Pro', en: 'Bar Pro' },
+      limits: { ...UNLIMITED, members: 20 },
+      features: ['signage'],
+      version: 4,
+    });
+    applyResult(await pushWorkspace(a.workspace.id, paid));
+    // A newer app validates stricter, or the row was edited: status and one limit no longer parse.
+    const broken = { ...paid, status: 'PAUSED', limits: { ...paid.limits, cocktails: -1 } };
+    await prisma.workspaceEntitlement.update({ where: { workspaceId: a.workspace.id }, data: { snapshot: broken as unknown as Prisma.InputJsonValue } });
+
+    expect((await get(owner, a.workspace.id)).plan).toMatchObject({
+      planKey: 'bar_pro',
+      source: 'workspace',
+      status: 'ACTIVE',
+      limits: { cocktails: null, members: 20 },
+      features: ['signage'],
+    });
+    // The free default (no cocktails) does not apply.
+    expect((await callAs(owner, cocktailsHandler, { method: 'POST', query: { workspaceId: a.workspace.id }, body: { name: 'Still allowed' } })).status).toBe(
+      200,
+    );
+    // Logged without values.
+    const logged = errors.mock.calls.map((call) => String(call[0])).filter((message) => message.includes('[entitlements]'));
+    expect(logged.join('\n')).not.toContain('PAUSED');
+
+    // The control plane re-pushes the same version: applied, because the stored one is unreadable.
+    expect(applyResult(await pushWorkspace(a.workspace.id, paid))).toEqual({ applied: true, currentVersion: 4, currentHash: paid.hash });
+    expect(applyResult(await pushWorkspace(a.workspace.id, paid))).toEqual({ applied: false, currentVersion: 4, currentHash: paid.hash });
+    expect((await prisma.workspaceEntitlement.findUnique({ where: { workspaceId: a.workspace.id } }))!.snapshot).toMatchObject({ status: 'ACTIVE' });
+    errors.mockRestore();
+  });
+
+  it('re-applies a default push of the same version when the stored default is unreadable', async () => {
+    managed();
+    const free = snapshotWire({ version: 2 });
+    applyResult(await pushDefault(free));
+    await prisma.instanceSetting.update({
+      where: { key: 'entitlements.default' },
+      data: { value: { snapshot: { ...free, billing: 'invoice' } } as unknown as Prisma.InputJsonValue },
+    });
+    expect(applyResult(await pushDefault(free))).toEqual({ applied: true, currentVersion: 2, currentHash: free.hash });
+    expect(applyResult(await pushDefault(free))).toMatchObject({ applied: false });
   });
 });
 
@@ -687,6 +771,36 @@ describe('workspace status with ENTITLEMENTS_MODE=managed', () => {
     expect((await callAs(user, workspaceItemHandler, { method: 'GET', query: { workspaceId } })).status).toBe(200);
     const status = dataOf<WorkspaceEntitlementDto>(await callAs(user, entitlementHandler, { method: 'GET', query: { workspaceId } }));
     expect(status.plan?.status).toBe('SUSPENDED');
+    // The other reads of the app shell on every workspace load stay open; writes do not.
+    expect((await callAs(user, translationsCollectionHandler, { method: 'GET', query: { workspaceId } })).status).toBe(200);
+    expect((await callAs(user, workspaceAnnouncementsHandler, { method: 'GET', query: { workspaceId } })).status).toBe(200);
+    expectPlanError(
+      await callAs(roleUser(a, 'ADMIN'), translationsCollectionHandler, {
+        method: 'PUT',
+        query: { workspaceId },
+        body: { key: 'SHAKE', translations: { de: 'Schütteln' } },
+      }),
+      'WORKSPACE_SUSPENDED',
+    );
+
+    // Every member exports all cocktails and calculations without listing them first (the lists are blocked).
+    const content = await seedContent(workspaceId);
+    await seedCalculation(workspaceId, user.user.id, { cocktailId: content.cocktail.id, ingredientId: content.ingredient.id, unitId: content.unit.id });
+    const cocktailsDump = await callAs(user, cocktailsExportHandler, { method: 'POST', query: { workspaceId }, body: { all: true } });
+    expect(cocktailsDump.status, JSON.stringify(cocktailsDump.json)).toBe(200);
+    const allIds = (await prisma.cocktailRecipe.findMany({ where: { workspaceId }, select: { id: true } })).map((row) => row.id);
+    expect(allIds).toHaveLength(2);
+    expect((cocktailsDump.json as { cocktailRecipes: Array<{ id: string }> }).cocktailRecipes.map((item) => item.id).sort()).toEqual(allIds.sort());
+    const calculationsDump = await callAs(user, calculationsExportHandler, { method: 'POST', query: { workspaceId }, body: { all: true } });
+    expect(calculationsDump.status, JSON.stringify(calculationsDump.json)).toBe(200);
+    expect(calculationsDump.json).toMatchObject({ calculation: { workspaceId } });
+    // Either ids or `all`, not both and not neither.
+    for (const body of [{}, { all: true, cocktailIds: [content.cocktail.id] }, { all: false }]) {
+      expect((await callAs(user, cocktailsExportHandler, { method: 'POST', query: { workspaceId }, body })).status, JSON.stringify(body)).toBe(400);
+    }
+    for (const body of [{}, { all: true, ids: [] }]) {
+      expect((await callAs(user, calculationsExportHandler, { method: 'POST', query: { workspaceId }, body })).status, JSON.stringify(body)).toBe(400);
+    }
     expect((await callAs(roleUser(a, 'ADMIN'), backupExportHandler, { method: 'GET', query: { workspaceId } })).status).toBe(200);
     expect((await callAs(user, leaveHandler, { method: 'POST', query: { workspaceId } })).status).toBe(200);
     expect((await callAs(roleUser(a, 'OWNER'), workspaceItemHandler, { method: 'DELETE', query: { workspaceId } })).status).toBe(200);
@@ -698,10 +812,10 @@ describe('public pages with ENTITLEMENTS_MODE=managed', () => {
     managed();
   });
 
-  it('SUSPENDED shows "currently not available" on menus and the signage feed; READ_ONLY keeps them', async () => {
+  it('SUSPENDED shows "currently not available" on menus, their images and the signage feed; READ_ONLY keeps them', async () => {
     const { a } = await seedTenantPair();
     const workspaceId = a.workspace.id;
-    await prisma.workspace.update({ where: { id: workspaceId }, data: { publicSlug: 'suspended-bar' } });
+    await prisma.workspace.update({ where: { id: workspaceId }, data: { publicSlug: 'suspended-bar', image: PIXEL_PNG } });
     const document = createDefaultGuestMenuDocument() as unknown as Prisma.InputJsonValue;
     await prisma.guestMenu.create({
       data: { workspaceId, name: 'Karte', slug: 'karte', enabled: true, isDefault: true, draft: document, published: document, publishedAt: new Date() },
@@ -709,10 +823,14 @@ describe('public pages with ENTITLEMENTS_MODE=managed', () => {
     const menu = () => loadPublicMenu({ bar: 'suspended-bar', menuSlug: null, locale: null });
     const menuApi = () => callAs('anonymous', publicMenusHandler, { method: 'GET', query: { slug: ['suspended-bar'] } });
     const feed = () => callAs('anonymous', publicSignageHandler, { method: 'GET', query: { id: workspaceId } });
+    // The menu shows the workspace logo (no own logo in the theme).
+    const logo = () =>
+      callAs('anonymous', publicImagesHandler, { method: 'GET', query: { workspaceSlug: 'suspended-bar', kind: 'workspace-logo', id: workspaceId } });
 
     await plan(workspaceId, {}, { status: 'READ_ONLY', features: ['signage'] });
     expect((await menu()).kind).toBe('menu');
     expect((await feed()).status).toBe(200);
+    expect((await logo()).status).toBe(200);
 
     await plan(workspaceId, {}, { status: 'SUSPENDED', features: ['signage'] });
     expect((await menu()).kind).toBe('unavailable');
@@ -722,6 +840,10 @@ describe('public pages with ENTITLEMENTS_MODE=managed', () => {
     const blocked = await feed();
     expect(blocked.status).toBe(503);
     expect(errorCodeOf(blocked)).toBe('WORKSPACE_UNAVAILABLE');
+    const image = await logo();
+    expect(image.status).toBe(503);
+    expect(errorCodeOf(image)).toBe('WORKSPACE_UNAVAILABLE');
+    expect(image.headers['Cache-Control']).toBe('private, no-store');
   });
 });
 
@@ -787,6 +909,104 @@ describe('ENTITLEMENTS_MODE=off', () => {
     const menu = await prisma.guestMenu.create({
       data: { workspaceId, name: 'Karte', slug: 'karte', draft: {} as Prisma.InputJsonValue },
     });
-    expect((await buildTableTentHtml(a.workspace, menu, { target: 'bar' })).html).not.toContain('Powered by');
+    const tent = (await buildTableTentHtml(a.workspace, menu, { target: 'bar' })).html;
+    expect(tent).not.toContain('Powered by');
+    // Byte for byte the document of v1.22: no branding CSS, no extra line.
+    expect(tent).not.toContain('gm-powered-by');
+    expect(tent).toContain('</p></div>\n</div>');
+  });
+
+  it('answers byte for byte as without the control plane: restrictive snapshots and announcements change no body, and no query reads them', async () => {
+    const { a } = await seedTenantPair();
+    const workspaceId = a.workspace.id;
+    const owner = roleUser(a, 'OWNER');
+    const user = roleUser(a, 'USER');
+    const key = await seedApiKey(workspaceId, owner.user.id, ['COCKTAILS_READ', 'COCKTAILS_CREATE', 'COCKTAILS_DELETE']);
+    const content = await seedContent(workspaceId);
+    await seedCalculation(workspaceId, owner.user.id, { cocktailId: content.cocktail.id, ingredientId: content.ingredient.id, unitId: content.unit.id });
+    await prisma.workspace.update({ where: { id: workspaceId }, data: { publicSlug: 'off-bar', image: PIXEL_PNG } });
+    const document = createDefaultGuestMenuDocument() as unknown as Prisma.InputJsonValue;
+    const menu = await prisma.guestMenu.create({
+      data: { workspaceId, name: 'Karte', slug: 'karte', enabled: true, isDefault: true, draft: document, published: document, publishedAt: new Date() },
+    });
+    const q = { workspaceId };
+
+    /** Representative existing routes: reads by role and API key, writes, exports and every public output. */
+    async function responses() {
+      const results: Record<string, { status: number; body: unknown }> = {};
+      const record = async (name: string, result: Promise<HandlerResult>) => {
+        const { status, json, body } = await result;
+        results[name] = { status, body: json ?? (Buffer.isBuffer(body) ? body.toString('base64') : body) };
+      };
+      await record('GET workspace (user)', callAs(user, workspaceItemHandler, { method: 'GET', query: q }));
+      await record('GET translations (user)', callAs(user, translationsCollectionHandler, { method: 'GET', query: q }));
+      await record('GET cocktails (user)', callAs(user, cocktailsHandler, { method: 'GET', query: q }));
+      await record('GET cocktails (api key)', callAs({ apiKeyJwt: key.jwt }, cocktailsHandler, { method: 'GET', query: q }));
+      await record('GET calculations (owner)', callAs(owner, calculationsHandler, { method: 'GET', query: q }));
+      await record('GET statistics/advanced (user)', callAs(user, overviewHandler, { method: 'GET', query: q }));
+      await record('GET guest menu (owner)', callAs(owner, guestMenuItemHandler, { method: 'GET', query: { ...q, menuId: menu.id } }));
+      await record('GET entitlement (user)', callAs(user, entitlementHandler, { method: 'GET', query: q }));
+      await record('GET announcements (user)', callAs(user, announcementsHandler, { method: 'GET' }));
+      await record('GET workspace announcements (user)', callAs(user, workspaceAnnouncementsHandler, { method: 'GET', query: q }));
+      await record(
+        'POST cocktails/export/json (user)',
+        callAs(user, cocktailsExportHandler, { method: 'POST', query: q, body: { cocktailIds: [content.cocktail.id] } }),
+      );
+      await record('GET guest menu export/html (user)', callAs(user, guestMenuHtmlHandler, { method: 'GET', query: { ...q, menuId: menu.id } }));
+      await record('GET backup export (admin)', callAs(roleUser(a, 'ADMIN'), backupExportHandler, { method: 'GET', query: q }));
+      await record('GET public menu', callAs('anonymous', publicMenusHandler, { method: 'GET', query: { slug: ['off-bar'] } }));
+      await record(
+        'GET public image',
+        callAs('anonymous', publicImagesHandler, { method: 'GET', query: { workspaceSlug: 'off-bar', kind: 'workspace-logo', id: workspaceId } }),
+      );
+      await record('GET public signage feed', callAs('anonymous', publicSignageHandler, { method: 'GET', query: { id: workspaceId } }));
+      results['table tent html'] = { status: 200, body: (await buildTableTentHtml(a.workspace, menu, { target: 'bar' })).html };
+      // A write and its undo, so the reads of the next run see the same data.
+      const created = await callAs({ apiKeyJwt: key.jwt }, cocktailsHandler, { method: 'POST', query: q, body: { name: 'Off write' } });
+      results['POST cocktails (api key)'] = { status: created.status, body: created.json };
+      const createdId = dataOf<{ id: string }>(created).id;
+      await record(
+        'DELETE cocktail (api key)',
+        callAs({ apiKeyJwt: key.jwt }, cocktailItemHandler, { method: 'DELETE', query: { ...q, cocktailId: createdId } }),
+      );
+      return normalizeVolatile(JSON.parse(JSON.stringify(results).replaceAll(createdId, '<created cocktail>')) as typeof results);
+    }
+
+    const before = await responses();
+
+    // Everything the control plane could have pushed, as restrictive as possible.
+    const zero = { cocktails: 0, members: 0, calculations: 0, guestMenusPublished: 0, signageScreens: 0, apiKeys: 0 };
+    applyResult(await pushDefault(snapshotWire({ limits: zero, status: 'SUSPENDED' })));
+    applyResult(await pushWorkspace(workspaceId, snapshotWire({ limits: zero, status: 'SUSPENDED' })));
+    const announcement = { level: 'critical', body: { de: 'Gesperrt', en: 'Suspended' } };
+    const pushed = await callAs('master', instanceAnnouncementsHandler, {
+      method: 'PUT',
+      body: {
+        announcements: [
+          { id: 'all', ...announcement, workspaceIds: [] },
+          { id: 'ws', ...announcement, workspaceIds: [workspaceId] },
+        ],
+      },
+    });
+    expect(pushed.status, JSON.stringify(pushed.json)).toBe(200);
+
+    // Every statement the app sends while answering, at the driver (Prisma's adapter uses this `pg`).
+    const sql: string[] = [];
+    const originalQuery = pg.Client.prototype.query;
+    const query = vi.spyOn(pg.Client.prototype, 'query').mockImplementation(function (this: pg.Client, ...args: unknown[]) {
+      const config = args[0] as string | { text?: string } | undefined;
+      sql.push(typeof config === 'string' ? config : (config?.text ?? ''));
+      return (originalQuery as (...values: unknown[]) => unknown).apply(this, args);
+    } as never);
+    let after: Awaited<ReturnType<typeof responses>>;
+    try {
+      after = await responses();
+    } finally {
+      query.mockRestore();
+    }
+
+    expect(after).toEqual(before);
+    expect(sql.length).toBeGreaterThan(20);
+    expect(sql.filter((text) => /"(WorkspaceEntitlement|InstanceSetting|InstanceAnnouncement|InstanceAuditLog)"/.test(text))).toEqual([]);
   });
 });

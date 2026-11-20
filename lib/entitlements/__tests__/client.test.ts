@@ -12,14 +12,17 @@ describe('plan events', () => {
     reportPlanError(402, 'PAYMENT', null);
     reportPlanError(402, 'PLAN_LIMIT_REACHED', { key: 'cocktails', limit: 50, current: 50 });
     reportPlanError(402, 'WORKSPACE_READ_ONLY', { key: 'status', limit: null, current: null });
-    reportPlanError(402, 'PLAN_FEATURE_MISSING', 'not an object');
+    reportPlanError(402, 'PLAN_FEATURE_MISSING', 'not an object', 'get');
+    reportPlanError(402, 'WORKSPACE_SUSPENDED', null, 'DELETE');
     unsubscribe();
     reportPlanError(402, 'PLAN_LIMIT_REACHED', null);
 
     expect(listener.mock.calls.map(([event]) => event)).toEqual([
-      { code: 'PLAN_LIMIT_REACHED', details: { key: 'cocktails', limit: 50, current: 50 } },
-      { code: 'WORKSPACE_READ_ONLY', details: { key: 'status', limit: null, current: null } },
-      { code: 'PLAN_FEATURE_MISSING', details: null },
+      // Without a method the request was a `GET` (fetch default).
+      { code: 'PLAN_LIMIT_REACHED', details: { key: 'cocktails', limit: 50, current: 50 }, read: true },
+      { code: 'WORKSPACE_READ_ONLY', details: { key: 'status', limit: null, current: null }, read: true },
+      { code: 'PLAN_FEATURE_MISSING', details: null, read: true },
+      { code: 'WORKSPACE_SUSPENDED', details: null, read: false },
     ]);
   });
 });
@@ -32,7 +35,10 @@ describe('reportPlanErrorResponse', () => {
     reportPlanErrorResponse(402, null);
     reportPlanErrorResponse(500, { error: { code: 'PLAN_LIMIT_REACHED' } });
     unsubscribe();
-    expect(listener.mock.calls.map(([event]) => event)).toEqual([{ code: 'PLAN_LIMIT_REACHED', details: { key: 'cocktails', limit: 1, current: 1 } }]);
+    // Raw `fetch` callers report writes.
+    expect(listener.mock.calls.map(([event]) => event)).toEqual([
+      { code: 'PLAN_LIMIT_REACHED', details: { key: 'cocktails', limit: 1, current: 1 }, read: false },
+    ]);
   });
 });
 

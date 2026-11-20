@@ -13,7 +13,7 @@ import { portalHandoffAvailable } from '@lib/portal/handoffConfig';
 import type { ControlPlaneHeaders } from '@lib/instance/controlPlaneHeaders';
 import { runControlPlaneWrite } from '@lib/instance/controlPlaneWrite';
 import { shouldApply, type SnapshotWire } from '@lib/entitlements/snapshot';
-import { DEFAULT_SNAPSHOT_SETTING, loadEffectiveSnapshot, type StoredDefault } from '@lib/entitlements/store';
+import { DEFAULT_SNAPSHOT_SETTING, loadEffectiveSnapshot, loadStoredDefault, readWorkspaceSnapshot } from '@lib/entitlements/store';
 import { countAllUsage } from '@lib/entitlements/usage';
 import type { EntitlementApplyResult, WorkspaceEntitlementDto } from '@lib/schemas/entitlements';
 import prisma from '../../../prisma/prisma';
@@ -49,10 +49,11 @@ export async function putDefaultEntitlements(req: NextApiRequest, snapshot: Snap
     payload: snapshot,
     apply: async (tx) => {
       await lockWorkspaceScope(tx, INSTANCE_SCOPE, 'entitlements:default');
-      const row = await tx.instanceSetting.findUnique({ where: { key: DEFAULT_SNAPSHOT_SETTING } });
-      const current = (row?.value as unknown as StoredDefault | undefined)?.snapshot ?? null;
-      if (!shouldApply(current?.version ?? null, snapshot.version)) {
-        const response = { applied: false, currentVersion: current?.version ?? 0, currentHash: current?.hash ?? null };
+      const stored = await loadStoredDefault(tx);
+      const current = stored?.snapshot ?? null;
+      // An unreadable stored default is replaced by a push of the same version, too.
+      if (!shouldApply(current?.version ?? null, snapshot.version, !stored || stored.invalidFields.length === 0)) {
+        const response = { applied: false, currentVersion: current?.version ?? 0, currentHash: current?.hash || null };
         return { response, details: { version: snapshot.version, planKey: snapshot.planKey } };
       }
       const json = { snapshot } as unknown as Prisma.InputJsonValue;
@@ -86,7 +87,9 @@ export async function putWorkspaceEntitlements(req: NextApiRequest, workspaceId:
       await lockWorkspaceScope(tx, workspaceId, 'entitlements:snapshot');
 
       const current = await tx.workspaceEntitlement.findUnique({ where: { workspaceId }, select: { version: true, hash: true, snapshot: true } });
-      if (!shouldApply(current?.version ?? null, snapshot.version)) {
+      const stored = current ? readWorkspaceSnapshot(current) : null;
+      // An unreadable stored snapshot is replaced by a push of the same version, too.
+      if (!shouldApply(current?.version ?? null, snapshot.version, !stored || stored.invalidFields.length === 0)) {
         const response = { applied: false, currentVersion: current?.version ?? 0, currentHash: current?.hash ?? null };
         return { response, details: { version: snapshot.version, planKey: snapshot.planKey } };
       }
@@ -94,7 +97,7 @@ export async function putWorkspaceEntitlements(req: NextApiRequest, workspaceId:
       const json = snapshot as unknown as Prisma.InputJsonValue;
       const data = { version: snapshot.version, hash: snapshot.hash, snapshot: json, appliedAt: new Date() };
       await tx.workspaceEntitlement.upsert({ where: { workspaceId }, create: { workspaceId, ...data }, update: data });
-      const previous = current?.snapshot as unknown as SnapshotWire | undefined;
+      const previous = stored?.snapshot;
       await tx.auditLog.create({
         data: {
           workspaceId,

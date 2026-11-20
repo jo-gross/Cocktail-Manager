@@ -9,6 +9,7 @@ import {
   isFreeWorkspace,
   limitOf,
   parseFreeWorkspacesPerOwner,
+  readStoredSnapshot,
   shouldApply,
 } from '@lib/entitlements/snapshot';
 import { instanceCapabilities } from '@lib/instance/config';
@@ -116,7 +117,48 @@ describe('effectiveSnapshot', () => {
   });
 });
 
+describe('readStoredSnapshot (lenient read of stored snapshots)', () => {
+  it('returns a valid snapshot unchanged', () => {
+    const stored = snapshot({ planKey: 'bar_pro' });
+    expect(readStoredSnapshot(stored)).toEqual({ snapshot: SnapshotWireSchema.parse(stored), invalidFields: [] });
+  });
+
+  it('keeps every valid field and treats unreadable ones as unrestricted', () => {
+    const stored = snapshot({
+      planKey: 'bar_pro',
+      status: 'READ_ONLY',
+      features: ['signage'],
+      limits: { cocktails: 5, members: 2, calculations: 1, guestMenusPublished: 1, signageScreens: 1, apiKeys: 0 },
+    });
+    const broken = { ...stored, billing: 'invoice', features: ['signage', 7], limits: { ...stored.limits, cocktails: 'many', apiKeys: undefined } };
+    const read = readStoredSnapshot(broken, { version: 9, hash: 'h' })!;
+    expect(read.invalidFields.sort()).toEqual(['billing', 'features', 'limits.apiKeys', 'limits.cocktails']);
+    expect(read.snapshot).toMatchObject({
+      version: 9,
+      hash: 'h',
+      planKey: 'bar_pro',
+      status: 'READ_ONLY',
+      billing: 'contact',
+      features: ['signage'],
+      limits: { cocktails: null, members: 2, calculations: 1, guestMenusPublished: 1, signageScreens: 1, apiKeys: null },
+    });
+  });
+
+  it('falls back field by field for an empty object and refuses non-objects', () => {
+    const read = readStoredSnapshot({}, { version: 3, hash: 'h' })!;
+    expect(read.snapshot).toMatchObject({ version: 3, status: 'ACTIVE', planKey: '', billing: 'contact', nextChangeAt: null, scheduledEnd: null });
+    for (const key of LIMIT_KEYS) expect(read.snapshot.limits[key]).toBeNull();
+    expect(hasFeature({ snapshot: read.snapshot, source: 'workspace' }, 'signage')).toBe(true);
+    for (const value of [null, 'x', 3, []]) expect(readStoredSnapshot(value)).toBeNull();
+  });
+});
+
 describe('shouldApply (version rule)', () => {
+  it('re-applies the same version when the stored snapshot is unreadable', () => {
+    expect(shouldApply(3, 3, false)).toBe(true);
+    expect(shouldApply(3, 2, false)).toBe(false);
+  });
+
   it('applies only a higher version', () => {
     expect(shouldApply(null, 1)).toBe(true);
     expect(shouldApply(3, 4)).toBe(true);

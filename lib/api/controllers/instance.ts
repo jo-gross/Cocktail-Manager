@@ -74,7 +74,11 @@ async function summarize(rows: SummaryRow[]): Promise<InstanceWorkspaceSummaryDt
       where: { ...inPage, revoked: false, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
       _count: { _all: true },
     }),
-    prisma.auditLog.groupBy({ by: ['workspaceId'], where: inPage, _max: { createdAt: true } }),
+    // Newest audit log entry per workspace: one lookup in `AuditLog(workspaceId, createdAt)` each, instead of a
+    // `groupBy` that reads every entry of the page's workspaces.
+    prisma.$queryRaw<Array<{ workspaceId: string; at: Date | null }>>`
+      SELECT w."id" AS "workspaceId", (SELECT max(a."createdAt") FROM "AuditLog" a WHERE a."workspaceId" = w."id") AS "at"
+      FROM unnest(${ids}::text[]) AS w("id")`,
     prisma.workspaceUser.findMany({
       where: { ...inPage, role: 'OWNER' },
       select: { workspaceId: true, user: { select: { id: true, email: true, name: true, createdAt: true } } },
@@ -84,7 +88,7 @@ async function summarize(rows: SummaryRow[]): Promise<InstanceWorkspaceSummaryDt
 
   const usage = mapUsage(ids, { cocktails, members, calculations, guestMenusPublished, signageScreens, apiKeys });
   const lastActivity = latestPerWorkspace(
-    auditLogs.map((group) => ({ workspaceId: group.workspaceId, at: group._max.createdAt })),
+    auditLogs,
     members.map((group) => ({ workspaceId: group.workspaceId, at: group._max.lastOpened })),
   );
   const ownerByWorkspace = pickOwners(owners);

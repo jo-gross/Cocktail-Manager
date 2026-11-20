@@ -248,6 +248,9 @@ describe('PlanLimitDialog', () => {
   });
 });
 
+const i18nDe = createInstance();
+await i18nDe.init({ lng: 'de', resources: { de: { plan: dePlan, common: deCommon } }, defaultNS: 'plan' });
+
 describe('SuspendedWorkspaceView', () => {
   it('links to export and to leaving/deleting', async () => {
     const html = await render(<SuspendedWorkspaceView workspaceId="ws1" />);
@@ -255,6 +258,46 @@ describe('SuspendedWorkspaceView', () => {
     expect(html).toContain('/workspaces/ws1/manage/settings/data');
     expect(html).toContain('/workspaces/ws1/manage/settings/danger');
     expect(html).not.toContain('Abo verwalten');
+  });
+
+  it('offers every member the reduced export and leaving; the last owner cannot leave', async () => {
+    const view = (members: Array<{ userId: string; role: string }>, externallyManaged = false) =>
+      renderToStaticMarkup(
+        <I18nextProvider i18n={i18nDe}>
+          <UserContext.Provider
+            value={
+              {
+                user: { id: 'u1', emailVerified: true },
+                workspace: { id: 'ws1', isExternallyManaged: externallyManaged, members },
+                isUserPermitted: (role: string) => members.find((member) => member.userId === 'u1')?.role === 'OWNER' || role === 'USER',
+              } as never
+            }
+          >
+            <SuspendedWorkspaceView workspaceId="ws1" />
+          </UserContext.Provider>
+        </I18nextProvider>,
+      );
+    const LEAVE = '>Workspace verlassen</button>';
+    const member = view([{ userId: 'u1', role: 'USER' }]);
+    expect(member).toContain('Cocktails exportieren (JSON)');
+    expect(member).toContain('Kalkulationen exportieren (JSON)');
+    expect(member).toContain(LEAVE);
+    expect(member).not.toContain('/workspaces/ws1/manage/settings/data');
+    expect(member).not.toContain('/workspaces/ws1/manage/settings/danger');
+
+    const lastOwner = view([
+      { userId: 'u1', role: 'OWNER' },
+      { userId: 'u2', role: 'ADMIN' },
+    ]);
+    expect(lastOwner).not.toContain(LEAVE);
+    expect(lastOwner).toContain('/workspaces/ws1/manage/settings/data');
+    expect(
+      view([
+        { userId: 'u1', role: 'OWNER' },
+        { userId: 'u2', role: 'OWNER' },
+      ]),
+    ).toContain(LEAVE);
+    expect(view([{ userId: 'u1', role: 'USER' }], true)).not.toContain(LEAVE);
   });
 
   it('offers "Abo verwalten" for billing portal, so a suspended workspace can still pay', async () => {

@@ -3150,11 +3150,15 @@
             },
             "maxItems": 500,
             "description": "Ids of the calculations to export."
+          },
+          "all": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Export every calculation of the workspace instead of `ids`."
           }
-        },
-        "required": [
-          "ids"
-        ]
+        }
       },
       "CalculationGroup": {
         "type": "object",
@@ -5319,11 +5323,15 @@
             "minItems": 1,
             "maxItems": 5000,
             "description": "Ids of the cocktails to export (max. 5000)."
+          },
+          "all": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Export every cocktail of the workspace (archived ones included) instead of `cocktailIds`."
           }
-        },
-        "required": [
-          "cocktailIds"
-        ]
+        }
       },
       "CocktailExportPdfInput": {
         "type": "object",
@@ -16086,16 +16094,6 @@
           },
           "401": {
             "description": "Missing or invalid credentials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "402": {
-            "description": "Hosted instances only (`ENTITLEMENTS_MODE=managed`): `WORKSPACE_SUSPENDED`. `error.issues` holds `{ key, limit, current }`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -33211,7 +33209,7 @@
             }
           },
           "402": {
-            "description": "Hosted instances only (`ENTITLEMENTS_MODE=managed`): `PLAN_FEATURE_MISSING` (`api`) for workspace API keys, `WORKSPACE_SUSPENDED`. `error.issues` holds `{ key, limit, current }`.",
+            "description": "Hosted instances only (`ENTITLEMENTS_MODE=managed`): `PLAN_FEATURE_MISSING` (`api`) for workspace API keys. `error.issues` holds `{ key, limit, current }`.",
             "content": {
               "application/json": {
                 "schema": {

@@ -109,7 +109,9 @@ and for this workspace), most severe first, only within the time window (`compon
 dismiss `info` announcements; the dismissal is stored in the browser per announcement id and content, so a changed
 announcement shows again. `warning` and `critical` stay until the control plane removes them or `endsAt` passes. The
 banner reads `GET /api/v1/announcements` and `GET /api/v1/workspaces/{workspaceId}/announcements` (session only, every
-member) and refreshes every five minutes.
+member; the workspace read stays open in a suspended workspace) and refreshes every five minutes, only with
+`ENTITLEMENTS_MODE=managed`: the browser learns the mode from `GET /api/config/entitlements` and a self-hosted instance
+never requests or polls announcements.
 
 ### `POST /api/v1/instance/workspaces/{id}/transfer-ownership`
 
@@ -151,6 +153,11 @@ the request body and the change.
 - **`409`** (contract `components.responses.Conflict`, documented for every write): `IDEMPOTENCY_KEY_REUSED` when the
   key was already used for another request, and conflicting states such as `TEMPLATE_IN_USE`.
 - Invalid headers (key that is no UUID, actor over 254 or reason over 500 characters) → `400 VALIDATION_ERROR`.
+- **Retention** (`lib/instance/auditRetention.ts`): `InstanceAuditLog` entries are deleted after 90 days. The stored
+  answer of an `Idempotency-Key` is kept for 30 days; after that the key is released (cleared, the entry stays as
+  audit until it is deleted), and a request with that key runs again. The control plane reuses a key only for retries
+  of an open push, which end within hours. The cleanup runs after a control plane write, at most once per hour per
+  process, so an instance without control plane writes never runs it.
 
 ## Usage counts
 
@@ -172,7 +179,6 @@ The first four match what the control plane derives from the legacy routes (`/co
 
 - the workspace row itself (name, description, image, slug, setup state, …),
 - members joining or leaving and role changes,
-- name or email of a member,
 - workspace settings,
 - setting or removing the template mark.
 
@@ -181,22 +187,35 @@ controllers, imports, OIDC group sync, cascades and raw SQL. Not covered on purp
 `lastOpened` visits and template metadata. Usage therefore needs a full sync now and then; `updatedSince` is for the
 mirrored workspace data.
 
-The timestamp is the start time of the writing transaction (UTC). A transaction that runs while the control plane
-syncs can commit with a timestamp just before the sync started, so incremental syncs should overlap: use the start
-time of the previous sync minus a safety margin (e.g. one minute) as `updatedSince`.
+**`updatedSince` does not cover a member's name or email change.** A trigger on `User` would have to update every
+workspace of the user on each rename: 33× slower renames for members of many workspaces and deadlocks with long
+imports. The control plane runs a full listing at least daily, so changed member names and emails (owner, member
+list) arrive with it.
+
+A transaction that writes many child rows of one workspace (an import, a template) updates the workspace row once: the
+triggers skip a workspace whose `updatedAt` already has the transaction's time.
+
+The timestamp is the start time of the writing transaction (UTC, independent of the time zone of the database
+session). A transaction that runs while the control plane syncs can commit with a timestamp just before the sync
+started, so incremental syncs should overlap: use the start time of the previous sync minus a safety margin (e.g. one
+minute) as `updatedSince`.
 
 The migration back-fills `createdAt` from the oldest audit log entry of the workspace, otherwise the migration time;
-`updatedAt` starts at the migration time, so the first incremental sync after the upgrade sees every workspace.
+`updatedAt` starts at the migration time (both UTC), so the first incremental sync after the upgrade sees every
+workspace. It also adds the index `AuditLog(workspaceId, createdAt)`, which the inventory uses for `lastActivityAt`
+(one index lookup per workspace of a page).
 
 ## Tests
 
 - `lib/__tests__/api/v1/instance.integration.test.ts`: every operation, paging, `updatedSince` after member and
   setting changes, search, 401 cases.
 - `lib/__tests__/api/v1/workspaceTimestampsMigration.integration.test.ts`: the back-fill on a scratch database with
-  existing workspaces and the triggers.
+  existing workspaces (session time zone `Europe/Berlin`, so local time instead of UTC fails), the triggers, no trigger
+  on `User` and one row version per transaction.
 - `lib/__tests__/api/v1/instanceAnnouncements.integration.test.ts`: the push (replace, validation, 401 cases, audit,
   idempotent retries, concurrent retries), banner targeting (all, listed workspaces, time window) and capabilities
   per mode.
+- `lib/__tests__/api/v1/instanceAuditRetention.integration.test.ts`: retention of the audit log and the stored answers.
 - `lib/__tests__/api/v1/instanceSupport.integration.test.ts`: ownership transfer, session revocation and workspace
   deletion: effect, unknown ids, validation, 401 cases, audit entries, idempotent retries and reused keys.
 - `components/announcements/__tests__/` and `lib/announcements/__tests__/`: banner rendering, texts per language and
