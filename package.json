@@ -61,7 +61,7 @@
     "@prisma/client": "7.10.1",
     "@serwist/next": "^9.5.15",
     "bcrypt": "^6.0.0",
-    "better-auth": "^1.7.25",
+    "better-auth": "^1.7.27",
     "browser-image-compression": "^2.0.2",
     "chart.js": "4.6.1",
     "chartjs-plugin-datalabels": "^2.2.0",
