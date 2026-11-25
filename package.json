@@ -126,7 +126,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/coverage-v8": "^5.1.1",
     "dotenv": "^18.0.10",
     "eslint": "10.15.0",
     "eslint-config-next": "16.4.5",
@@ -145,7 +145,7 @@
     "tsx": "^4.23.15",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.63.0",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
