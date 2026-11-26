@@ -6,15 +6,19 @@ import { SettingsSectionSkeleton } from '@components/settings/SettingsSection';
 import { WorkspaceNameSection } from '@components/settings/WorkspaceNameSection';
 import { WorkspaceLogoSection } from '@components/settings/WorkspaceLogoSection';
 import { WorkspaceRegionSection } from '@components/settings/WorkspaceRegionSection';
+import { PlanCard } from '@components/plan/PlanCard';
+import { usePlan } from '@components/plan/PlanContext';
 
 function GeneralSettingsPage() {
   const router = useRouter();
   const workspaceId = typeof router.query.workspaceId === 'string' ? router.query.workspaceId : undefined;
+  const { entitlement } = usePlan();
 
   return (
     <SettingsLayout page="general">
       {workspaceId ? (
         <>
+          <PlanCard entitlement={entitlement} workspaceId={workspaceId} />
           <WorkspaceNameSection workspaceId={workspaceId} />
           <WorkspaceLogoSection key={workspaceId} workspaceId={workspaceId} />
           <WorkspaceRegionSection workspaceId={workspaceId} />

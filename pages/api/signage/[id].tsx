@@ -7,6 +7,9 @@
  *   workspace's monitor key (`key`); otherwise 403.
  * - Signage access tokens for PIN-protected guest menus are only issued with a valid key.
  * - Rate limited per IP (token bucket, 429 + Retry-After).
+ * - Hosted instances: without the plan feature `signage` the feed answers 402 `PLAN_FEATURE_MISSING` and the monitor
+ *   page shows "plan required"; a suspended workspace answers 503 `WORKSPACE_UNAVAILABLE` and the page shows "currently not
+ *   available" (docs/ENTITLEMENTS.md).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import HTTPMethod from 'http-method-enum';
@@ -20,6 +23,8 @@ import { mapSignageFormatView, mapSignageSlide, resolveSignageSlides } from '@li
 import { createSignageAccessToken } from '@lib/guest-menu/access';
 import { isValidSignageKey } from '@lib/signage/signageKey';
 import type { SignageSlideView } from '@lib/signage/types';
+import { isWorkspaceSuspended, workspaceHasFeature } from '@lib/entitlements/guards';
+import { planFeatureMissing } from '@lib/entitlements/errors';
 
 // Monitors poll every few minutes; the burst covers several monitors behind one NAT address.
 const limiter = new TokenBucketRateLimiter({ capacity: 60, refillPerSecond: 1 });
@@ -38,6 +43,15 @@ async function getSignage(req: NextApiRequest, res: NextApiResponse) {
   if (!query.success) return sendFail(res, 400, 'VALIDATION_ERROR', 'Invalid request query', query.error.issues);
   const { id, format, key } = query.data;
   const includeInactive = query.data.includeInactive === 'true';
+
+  if (await isWorkspaceSuspended(id)) {
+    res.setHeader('Cache-Control', 'private, no-store');
+    return sendFail(res, 503, 'WORKSPACE_UNAVAILABLE', 'Currently not available');
+  }
+  if (!(await workspaceHasFeature(id, 'signage'))) {
+    const error = planFeatureMissing('signage');
+    return sendFail(res, error.status, error.code, error.message, error.issues);
+  }
 
   let keyValid: boolean | undefined;
   const hasValidKey = async () => {

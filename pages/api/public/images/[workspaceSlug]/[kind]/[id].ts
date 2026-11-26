@@ -9,6 +9,9 @@
  *   GET /api/public/images/{bar}/ingredient/{ingredientId}   (ingredient of a shown cocktail, not hidden)
  *   GET /api/public/images/{bar}/workspace-logo/{workspaceId}
  *   GET /api/public/images/{bar}/menu-asset/{menuId}~{logo|background|block-<blockId>}
+ *
+ * Hosted instances: images of a suspended workspace answer 503 `WORKSPACE_UNAVAILABLE`, like its public menu
+ * (docs/ENTITLEMENTS.md "Status"). Never with `ENTITLEMENTS_MODE=off`.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createHash } from 'crypto';
@@ -18,6 +21,7 @@ import { findPublicWorkspace, parseStoredDocument } from '@lib/guest-menu/server
 import { decodeImage, getImageAllowlist, getProtectedMenuImageAllowlist } from '@lib/guest-menu/public.server';
 import { collectAccessTokens, createMenuAccess } from '@lib/guest-menu/access';
 import { loadWorkspaceImage } from '@lib/guest-menu/workspaceImage.server';
+import { isWorkspaceSuspended } from '@lib/entitlements/guards';
 
 const limiter = new TokenBucketRateLimiter({ capacity: 300, refillPerSecond: 10 });
 
@@ -83,6 +87,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const workspace = await findPublicWorkspace(bar);
     if (!workspace || !id) return notFound();
+    if (await isWorkspaceSuspended(workspace.id)) {
+      res.setHeader('Cache-Control', 'private, no-store');
+      return res.status(503).json({ error: { code: 'WORKSPACE_UNAVAILABLE', message: 'Currently not available' } });
+    }
     const allowlist = await getImageAllowlist(workspace, previewToken);
     let raw = await loadImage(workspace.id, kind, id, allowlist);
     let isProtected = false;

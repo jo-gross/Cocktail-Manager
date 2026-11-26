@@ -55,7 +55,9 @@ describe('API contract guards', () => {
     for (const op of await flattenOperations()) {
       if (op.spec.auth === 'user' || op.spec.auth === 'master') expect(op.basePath.includes('{workspaceId}'), `${op.method} ${op.basePath}`).toBe(false);
       if (op.spec.auth === 'user') expect(op.spec.sessionOnly, `${op.method} ${op.basePath} sessionOnly`).toBe(true);
-      if (op.spec.auth === 'master') expect(op.v1Path.startsWith('/api/admin/'), `${op.method} ${op.basePath} path`).toBe(true);
+      // Master-key routes: template administration under /api/admin, the control plane's instance API under /api/v1/instance.
+      if (op.spec.auth === 'master') expect(/^\/api\/(admin|v1\/instance)(\/|$)/.test(op.v1Path), `${op.method} ${op.basePath} path`).toBe(true);
+      if (op.v1Path.startsWith('/api/v1/instance')) expect(op.spec.auth, `${op.method} ${op.basePath} auth`).toBe('master');
     }
   });
 

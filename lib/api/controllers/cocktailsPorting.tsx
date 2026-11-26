@@ -23,6 +23,7 @@ import type { User, Workspace } from '@generated/prisma/client';
 import { createCocktailRecipeAuditLog, createLog } from '@lib/auditLog';
 import { assertIdsInWorkspace, type ScopedEntity } from '@lib/api/scope';
 import { BULK_TX_TIMEOUT_MS, lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
+import { trackLimits } from '@lib/entitlements/guards';
 import { ApiError } from '@lib/http/ApiError';
 import { normalizeImageCredit } from '@lib/images/imageCredit';
 import { prismaErrorToApiError } from '@lib/http/prismaErrors';
@@ -75,17 +76,18 @@ function parseTranslations(raw: string | null | undefined, fallback: Record<stri
 // Export JSON
 // ---------------------------------------------------------------------------
 
-export async function exportCocktailsJson(workspace: Workspace, cocktailIds: string[]): Promise<PortingResult> {
+/** `'all'`: every cocktail of the workspace (the export of a suspended workspace, docs/ENTITLEMENTS.md). */
+export async function exportCocktailsJson(workspace: Workspace, cocktailIds: string[] | 'all'): Promise<PortingResult> {
   const workspaceId = workspace.id;
 
-  if (cocktailIds.length === 0) {
+  if (cocktailIds !== 'all' && cocktailIds.length === 0) {
     return { status: 400, body: portingError('VALIDATION_ERROR', 'No cocktails selected') };
   }
 
   // One consistent snapshot over all tables.
   const exportData = await runTx(
     async (tx): Promise<CocktailExportStructure | null> => {
-      const cocktailRecipes = await tx.cocktailRecipe.findMany({ where: { id: { in: cocktailIds }, workspaceId } });
+      const cocktailRecipes = await tx.cocktailRecipe.findMany({ where: cocktailIds === 'all' ? { workspaceId } : { id: { in: cocktailIds }, workspaceId } });
       if (cocktailRecipes.length === 0) return null;
       const recipeIds = cocktailRecipes.map((r) => r.id);
 
@@ -962,13 +964,25 @@ export async function importCocktailsJson(
   if (issues.length > 0) return invalidImport('Import ist ungültig – es wurde nichts importiert', issues);
 
   try {
-    const { warnings, ...counts } = await runTx((tx) => executeImport(tx, workspaceId, user, dump, decisions), { timeout: BULK_TX_TIMEOUT_MS });
+    const { warnings, ...counts } = await runTx(
+      async (tx) => {
+        // Plan limit `cocktails`: counted before and after the import in this transaction; over the limit nothing is kept.
+        const limits = await trackLimits(tx, workspaceId, ['cocktails']);
+        const result = await executeImport(tx, workspaceId, user, dump, decisions);
+        await limits.check();
+        return result;
+      },
+      { timeout: BULK_TX_TIMEOUT_MS },
+    );
     return { status: 200, body: { success: true, ...counts, ...(warnings.length > 0 && { warnings }) } };
   } catch (error) {
     if (error instanceof ImportValidationError) return invalidImport('Import ist ungültig – es wurde nichts importiert', error.issues);
     const apiError = prismaErrorToApiError(error);
     if (apiError) {
-      return { status: apiError.status, body: portingError(apiError.code, `Import fehlgeschlagen – es wurde nichts importiert (${apiError.message})`) };
+      return {
+        status: apiError.status,
+        body: portingError(apiError.code, `Import fehlgeschlagen – es wurde nichts importiert (${apiError.message})`, { issues: apiError.issues }),
+      };
     }
     throw error;
   }

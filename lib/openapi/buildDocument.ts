@@ -13,8 +13,9 @@
 import { OpenAPIRegistry, OpenApiGeneratorV31 } from '@asteasolutions/zod-to-openapi';
 import { OPENAPI_TAG_GROUPS, OPENAPI_TAGS } from '@lib/openapi/tags';
 import type { HttpVerb, ResourceApiDoc, RouteSpec } from '@lib/openapi/types';
-import { ErrorResponse, dataEnvelope } from '@lib/schemas/common';
+import { ErrorResponse, cursorPaginatedEnvelope, dataEnvelope } from '@lib/schemas/common';
 import { PERMISSION_DESCRIPTIONS, PermissionEnum } from '@lib/schemas/permissions';
+import { planErrorDescription } from '@lib/entitlements/openapi';
 
 export const API_VERSION = '1.0.0';
 
@@ -23,7 +24,7 @@ const errorContent = { 'application/json': { schema: ErrorResponse } };
 
 function authNote(spec: RouteSpec): string {
   if (spec.auth === 'master') {
-    return '**Authentication:** instance master API key only (instance administration).';
+    return '**Authentication:** instance master API key only (instance administration). Sessions and workspace API keys get 401.';
   }
   if (spec.auth === 'user') {
     return '**Authentication:** requires a logged-in session (any user). API keys are NOT accepted.';
@@ -45,9 +46,10 @@ function successResponse(spec: RouteSpec) {
       content: Object.fromEntries(spec.rawResponse.contentTypes.map((ct) => [ct, { schema: { type: 'string', format: 'binary' } }])),
     };
   }
+  const envelope = spec.pagination === 'cursor' ? cursorPaginatedEnvelope(spec.response!) : dataEnvelope(spec.response!);
   return {
     description: spec.summary,
-    content: { 'application/json': { schema: dataEnvelope(spec.response!) } },
+    content: { 'application/json': { schema: envelope } },
   };
 }
 
@@ -88,10 +90,11 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[]) {
   // Documented in components even though it is referenced only from descriptions.
   registry.register('Permission', PermissionEnum);
 
-  const registerOperation = (fullPath: string, method: HttpVerb, spec: RouteSpec) => {
+  const registerOperation = (fullPath: string, basePath: string, method: HttpVerb, spec: RouteSpec) => {
     const request: Record<string, unknown> = {};
     if (spec.params) request.params = spec.params;
     if (spec.query) request.query = spec.query;
+    if (spec.headers) request.headers = spec.headers;
     if (spec.body) request.body = { content: { 'application/json': { schema: spec.body } } };
 
     const responses: Record<number, unknown> = {
@@ -103,6 +106,8 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[]) {
     for (const [code, description] of Object.entries(spec.errorResponses ?? {})) {
       responses[Number(code)] = { description, content: errorContent };
     }
+    const planError = planErrorDescription(method, basePath, spec);
+    if (planError) responses[402] = { description: planError, content: errorContent };
 
     const description = [authNote(spec), spec.description]
       .filter(Boolean)
@@ -128,7 +133,7 @@ export function buildOpenApiDocument(resources: ResourceApiDoc[]) {
 
   for (const resource of resources) {
     for (const [method, spec] of Object.entries(resource.operations) as Array<[HttpVerb, RouteSpec]>) {
-      registerOperation(`${resource.pathPrefix ?? '/api/v1'}${resource.basePath}`, method, spec);
+      registerOperation(`${resource.pathPrefix ?? '/api/v1'}${resource.basePath}`, resource.basePath, method, spec);
     }
   }
 

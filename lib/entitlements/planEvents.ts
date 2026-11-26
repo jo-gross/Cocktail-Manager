@@ -1,0 +1,50 @@
+/**
+ * Client-side notification of plan errors (402 from the entitlement guards), so the plan dialog opens wherever a
+ * request was refused. `apiV1Fetch` reports them; `PlanBoundary` listens. Pure module.
+ */
+import { PLAN_ERROR_CODES, type PlanErrorDetails } from './errors';
+
+export type PlanErrorCode = (typeof PLAN_ERROR_CODES)[number];
+
+export interface PlanErrorEvent {
+  code: PlanErrorCode;
+  details: PlanErrorDetails | null;
+  /** The refused request was a read (`GET`/`HEAD`), e.g. one the page or the app shell makes in the background. */
+  read: boolean;
+}
+
+type Listener = (event: PlanErrorEvent) => void;
+
+const listeners = new Set<Listener>();
+
+export function isPlanErrorCode(code: unknown): code is PlanErrorCode {
+  return typeof code === 'string' && (PLAN_ERROR_CODES as readonly string[]).includes(code);
+}
+
+function toDetails(issues: unknown): PlanErrorDetails | null {
+  if (!issues || typeof issues !== 'object' || Array.isArray(issues)) return null;
+  const record = issues as Record<string, unknown>;
+  if (typeof record.key !== 'string') return null;
+  const number = (value: unknown) => (typeof value === 'number' ? value : null);
+  return { key: record.key, limit: number(record.limit), current: number(record.current) };
+}
+
+const isRead = (method: string | undefined) => ['GET', 'HEAD'].includes((method ?? 'GET').toUpperCase());
+
+/** Reports a failed response; only 402 responses with a plan error code reach the listeners. */
+export function reportPlanError(status: number, code: unknown, issues: unknown, method?: string): void {
+  if (status !== 402 || !isPlanErrorCode(code)) return;
+  const event: PlanErrorEvent = { code, details: toDetails(issues), read: isRead(method) };
+  for (const listener of listeners) listener(event);
+}
+
+/** For raw `fetch` callers (writes): reports a parsed v1 error body (`{ error: { code, issues } }`) like `apiV1Fetch` does. */
+export function reportPlanErrorResponse(status: number, body: unknown, method = 'POST'): void {
+  const error = body && typeof body === 'object' ? (body as { error?: { code?: unknown; issues?: unknown } }).error : undefined;
+  reportPlanError(status, error?.code, error?.issues, method);
+}
+
+export function onPlanError(listener: Listener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}

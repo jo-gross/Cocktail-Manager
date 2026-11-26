@@ -10,6 +10,7 @@ import { ApiError } from '@lib/http/ApiError';
 import { createLog } from '@lib/auditLog';
 import { assertIdsInWorkspace } from '@lib/api/scope';
 import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
+import { trackLimits } from '@lib/entitlements/guards';
 import { toGuestMenuDto, toGuestMenuSummaryDto, toGuestMenuTemplateDto, type GuestMenuDtoContext } from '@lib/api/dto/guestMenus';
 import { createDefaultGuestMenuDocument, CUSTOM_TEMPLATE_PREFIX, GUEST_MENU_OUTPUTS, type GuestMenuDocument } from '@lib/guest-menu/schema';
 import { getScheduleNow, resolveActiveMenu } from '@lib/guest-menu/schedule';
@@ -339,6 +340,8 @@ export async function publishGuestMenu(workspace: Workspace, menuId: string, use
   if (issues.length > 0) throw new ApiError(422, 'TEMPLATE_ERROR', 'Template validation failed', issues);
 
   const updated = await runTx(async (tx) => {
+    // Plan limit `guestMenusPublished`; republishing a published menu does not raise the count.
+    const limits = await trackLimits(tx, workspace.id, ['guestMenusPublished']);
     // Optimistic check: publish exactly the validated draft, not one saved in the meantime.
     const result = await tx.guestMenu.updateMany({
       where: { id: menu.id, workspaceId: workspace.id, updatedAt: menu.updatedAt },
@@ -348,6 +351,7 @@ export async function publishGuestMenu(workspace: Workspace, menuId: string, use
       await findMenuInTx(tx, workspace, menu.id);
       throw new ApiError(409, 'CONFLICT', 'The guest menu was changed while publishing; please publish again');
     }
+    await limits.check();
     const after = await findMenuInTx(tx, workspace, menu.id);
     await auditGuestMenu(tx, workspace, user, 'UPDATE', menu, after);
     return after;

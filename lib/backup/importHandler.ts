@@ -7,6 +7,7 @@ import { MonitorFormat, Permission, Prisma, Role, type User, type Workspace } fr
 import { ensureSignageContainer } from '@lib/signage/signageApiHelpers';
 import { createLog } from '@lib/auditLog';
 import { lockWorkspaceScope, runTx, type Tx } from '@lib/db/tx';
+import { IMPORT_LIMIT_KEYS, assertImportFits, trackLimits } from '@lib/entitlements/guards';
 import { ApiError } from '@lib/http/ApiError';
 import { MASTER_API_KEY_USER_ID } from '@lib/http/requestAuth';
 import type { GuestMenuDocument } from '@lib/guest-menu/schema';
@@ -851,11 +852,23 @@ async function importBackup(req: NextApiRequest, res: NextApiResponse, user: Use
   const workspaceId = workspace.id;
   // Parse and validate everything before opening the transaction.
   const prepared = prepareBackupImport(readBody(req));
-
-  await runTx((tx) => executeBackupImport(tx, prepared, user, workspaceId), {
-    timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
-    maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
+  // Plan limits: refuse early when the backup alone exceeds them; the transaction checks the resulting counts exactly.
+  await assertImportFits(workspaceId, {
+    cocktails: prepared.data.cocktailRecipe.filter((cocktail) => !cocktail.isArchived).length,
+    calculations: prepared.data.calculation.length,
   });
+
+  await runTx(
+    async (tx) => {
+      const limits = await trackLimits(tx, workspaceId, IMPORT_LIMIT_KEYS);
+      await executeBackupImport(tx, prepared, user, workspaceId);
+      await limits.check();
+    },
+    {
+      timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
+      maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
+    },
+  );
 
   return res.status(200).json({ msg: 'Success', report: prepared.report });
 }

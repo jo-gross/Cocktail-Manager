@@ -12,6 +12,7 @@ import { ApiError } from '@lib/http/ApiError';
 import { MASTER_API_KEY_USER_ID } from '@lib/http/requestAuth';
 import { assertIdsInWorkspace } from '@lib/api/scope';
 import { BULK_TX_TIMEOUT_MS, lockWorkspaceScope, runTx, type Db, type Tx } from '@lib/db/tx';
+import { assertWithinLimit } from '@lib/entitlements/guards';
 import { toCalculationDto, toCalculationGroupDto, toCalculationSummaryDto } from '@lib/api/dto/calculations';
 import { Prisma } from '@generated/prisma/client';
 import packageJson from '../../../package.json';
@@ -140,6 +141,7 @@ export async function createCalculation(workspace: Workspace, user: User, input:
   assertNoDuplicateRows(input);
 
   const created = await runTx(async (tx) => {
+    await assertWithinLimit(tx, workspace.id, 'calculations');
     const groupId = await resolveGroupId(tx, workspace.id, input.groupId);
     await assertContentInWorkspace(tx, workspace.id, input);
 
@@ -295,14 +297,14 @@ export async function assignCalculationsToGroup(workspace: Workspace, input: Cal
  * (matching the legacy endpoint exactly).
  */
 export async function exportCalculationsJson(workspace: Workspace, input: CalculationExportJsonInput): Promise<unknown> {
-  const { ids } = input;
+  const { ids, all } = input;
 
-  if (!ids || ids.length === 0) {
+  if (!all && (!ids || ids.length === 0)) {
     throw new ApiError(400, 'NO_CALCULATIONS_SELECTED', 'No calculations selected');
   }
 
   const calculations = await prisma.cocktailCalculation.findMany({
-    where: { id: { in: ids }, workspaceId: workspace.id },
+    where: all ? { workspaceId: workspace.id } : { id: { in: ids }, workspaceId: workspace.id },
     include: {
       group: true,
       cocktailCalculationItems: { include: { cocktail: { select: { name: true } } } },
@@ -612,6 +614,8 @@ async function executeImport(workspaceId: string, user: User, input: Calculation
 
   return runTx(
     async (tx) => {
+      // Plan limit `calculations`: the new (not overwritten) calculations, checked before writing.
+      await assertWithinLimit(tx, workspaceId, 'calculations', plan.filter((entry) => !entry.overwriteId).length);
       // Groups and units may be created by name; serialize concurrent imports so
       // they reuse each other's rows instead of failing on the unique names.
       await lockWorkspaceScope(tx, workspaceId, 'calculation-import');

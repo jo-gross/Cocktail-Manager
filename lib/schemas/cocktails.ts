@@ -315,15 +315,18 @@ export const CocktailCloneSchema = z
   .openapi('CocktailCloneInput');
 export type CocktailCloneInput = z.infer<typeof CocktailCloneSchema>;
 
-/** Export request body — the ids of the cocktails to export. */
+/** Export request body — the ids of the cocktails to export, or `all: true` for every cocktail of the workspace. */
 export const CocktailExportJsonSchema = z
   .object({
     cocktailIds: z
       .array(z.string().max(COCKTAIL_LIMITS.id))
       .min(1)
       .max(COCKTAIL_LIMITS.exportJson)
+      .optional()
       .openapi({ description: `Ids of the cocktails to export (max. ${COCKTAIL_LIMITS.exportJson}).` }),
+    all: z.literal(true).optional().openapi({ description: 'Export every cocktail of the workspace (archived ones included) instead of `cocktailIds`.' }),
   })
+  .refine((value) => (value.all === true) !== (value.cocktailIds !== undefined), { message: 'Send either cocktailIds or all: true' })
   .openapi('CocktailExportJsonInput');
 export type CocktailExportJsonInput = z.infer<typeof CocktailExportJsonSchema>;
 

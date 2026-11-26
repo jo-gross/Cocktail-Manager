@@ -21,6 +21,7 @@ import { AuditLogHistoryModal } from '@components/modals/AuditLogHistoryModal';
 import { Badge, Button, Loading as UiLoading } from '@components/ui';
 import { FormSection } from '@components/forms/FormSection';
 import { useUnsavedChangesContext } from '@lib/forms/useUnsavedChanges';
+import { reportPlanErrorResponse } from '@lib/entitlements/planEvents';
 
 function EditCocktailRecipe() {
   const { t, i18n } = useTranslation(['manage', 'common', 'cocktail', 'errors', 'nav']);
@@ -170,6 +171,7 @@ function CocktailArchiveButton({ cocktailRecipe, workspaceId }: { cocktailRecipe
         .completeSave(() => router.replace(`/workspaces/${workspaceId}/manage/cocktails`))
         .then(() => alertService.success(cocktailRecipe.isArchived ? t('cocktail:unarchivedSuccess') : t('cocktail:archivedSuccess')));
     } else {
+      reportPlanErrorResponse(response.status, body);
       console.error('CocktailId -> (un)archive', response);
       alertService.error(
         body.error?.message ?? body.message ?? (cocktailRecipe.isArchived ? t('cocktail:unarchiveError') : t('cocktail:archiveError')),

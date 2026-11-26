@@ -8,6 +8,7 @@ import { sendFail, sendOk } from '@lib/http/responses';
 import { WorkspaceNameSchema } from '@lib/schemas/workspace';
 import { createWorkspace } from '@lib/templates/createWorkspace';
 import { TemplateLocaleSchema } from '@lib/templates/manifest';
+import { assertFreeWorkspaceAvailable } from '@lib/entitlements/guards';
 import prisma from '../../../../prisma/prisma';
 
 /** `locale`: primary content language (optional, the setup assistant can change it later). */
@@ -36,6 +37,8 @@ export default withHttpMethods({
       name: parsed.data.name,
       owner: { userId: user.id, role: Role.OWNER },
       locale: parsed.data.locale,
+      // Plan limit `freeWorkspacesPerOwner` (hosted instances); 402 PLAN_LIMIT_REACHED.
+      guard: (tx) => assertFreeWorkspaceAvailable(tx, user.id),
     });
 
     return sendOk(res, { id: result.id, name: result.name, description: result.description, image: result.image });

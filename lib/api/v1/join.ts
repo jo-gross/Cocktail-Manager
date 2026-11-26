@@ -20,6 +20,7 @@ import { sendFail, sendOk } from '@lib/http/responses';
 import { TokenBucketRateLimiter } from '@lib/http/rateLimit';
 import { lockWorkspaceScope, runTx } from '@lib/db/tx';
 import { sendJoinRequestNotificationToManagers } from '@lib/email/joinRequestNotifications';
+import { assertWithinLimit } from '@lib/entitlements/guards';
 
 const JoinQuerySchema = z.object({ code: z.string().trim().min(1).max(64) });
 
@@ -48,6 +49,7 @@ async function joinWithCode(code: string, user: User): Promise<JoinResult> {
       // Serialize concurrent first joins so an empty workspace gets exactly one owner.
       await lockWorkspaceScope(tx, workspaceId, 'membership');
       if ((await tx.workspaceUser.count({ where: { workspaceId } })) === 0) {
+        await assertWithinLimit(tx, workspaceId, 'members');
         const { count } = await tx.workspaceJoinCode.deleteMany({ where: { workspaceId, code } });
         if (count === 0) throw invalidCode();
         const result = await tx.workspaceUser.create({

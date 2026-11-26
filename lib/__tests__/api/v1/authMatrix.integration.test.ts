@@ -175,6 +175,34 @@ describe('v1 auth matrix (integration)', () => {
     expect(failures).toEqual([]);
   });
 
+  it('rejects everything but the master key for every master operation (instance API, template admin)', async () => {
+    const seeded = await seedWorkspace({ users: [{ role: 'OWNER' }] });
+    const owner = findUserByRole(seeded, 'OWNER');
+    const allPermissions = await seedApiKey(seeded.workspace.id, owner.user.id, PERMISSION_NAMES as Permission[]);
+    const operations = (await flattenOperations()).filter((op) => op.spec.auth === 'master');
+    const failures: string[] = [];
+
+    for (const op of operations) {
+      const binding = bindingFor(op);
+      if (!binding) {
+        failures.push(`${label(op)} → no handler binding`);
+        continue;
+      }
+      for (const [who, headers] of [
+        ['no credentials', {}],
+        ['wrong master key', bearerToken('ck_master_wrong')],
+        ['owner session', sessionCookie(owner.sessionToken)],
+        ['workspace api key', bearerToken(allPermissions.jwt)],
+      ] as const) {
+        const result = await invokeHandler(binding.handler, requestOptionsForOperation(op, { headers: { ...headers } }));
+        if (result.status !== 401) failures.push(`${label(op)} with ${who} → ${describeResult(result)}`);
+      }
+    }
+
+    expect(operations.some((op) => op.v1Path.startsWith('/api/v1/instance'))).toBe(true);
+    expect(failures).toEqual([]);
+  });
+
   it('GET /me returns 401 without API key', async () => {
     const binding = handlerBindings.find((b) => b.apiDoc.basePath === '/me');
     expect(binding).toBeDefined();

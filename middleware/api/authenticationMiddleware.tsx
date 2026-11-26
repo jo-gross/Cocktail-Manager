@@ -8,6 +8,7 @@ import { fail } from '@lib/http/responses';
 import { authenticateApiKey, checkMasterApiKey } from './jwtApiKeyMiddleware';
 import { hasPermission } from '@lib/permissions/apiKeyPermissions';
 import { MASTER_API_KEY_USER_ID, setRequestApiKeyPermissions } from '@lib/http/requestAuth';
+import { workspaceAccessError } from '@lib/entitlements/guards';
 
 /** Value of cookie `name` from a Cookie header (values may contain `=`, e.g. signed tokens). */
 function readCookie(cookieHeader: string | undefined, name: string): string | undefined {
@@ -27,8 +28,20 @@ function readCookie(cookieHeader: string | undefined, name: string): string | un
 }
 
 /** v1 error envelope plus the historic top-level `message` for older clients. */
-function authFail(res: NextApiResponse, status: number, code: string, message: string) {
-  return res.status(status).json({ ...fail(code, message), message });
+function authFail(res: NextApiResponse, status: number, code: string, message: string, issues?: unknown) {
+  return res.status(status).json({ ...fail(code, message, issues), message });
+}
+
+/**
+ * Entitlement gate after authentication (docs/ENTITLEMENTS.md "Status"): a `READ_ONLY` or `SUSPENDED` workspace refuses
+ * the request unless the route is exempt, and workspace API keys need the `api` feature. No-op with `ENTITLEMENTS_MODE=off`.
+ * Answers and returns `true` when the request is refused.
+ */
+async function refusedByEntitlements(req: NextApiRequest, res: NextApiResponse, workspaceId: string, via: 'session' | 'apiKey'): Promise<boolean> {
+  const error = await workspaceAccessError(req, workspaceId, via);
+  if (!error) return false;
+  authFail(res, error.status, error.code, error.message, error.issues);
+  return true;
 }
 
 /**
@@ -192,6 +205,7 @@ export function withWorkspacePermission(
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+      if (await refusedByEntitlements(req, res, apiKeyAuth.workspace.id, 'apiKey')) return;
       setRequestApiKeyPermissions(req, apiKeyAuth.permissions);
       return handler(req, res, dummyUser, apiKeyAuth.workspace);
     }
@@ -246,6 +260,7 @@ export function withWorkspaceSession(
       if (workspaceResult == null) {
         return authFail(sessionRes, HttpStatus.HTTP_STATUS_FORBIDDEN, 'FORBIDDEN', 'User is not permitted');
       }
+      if (await refusedByEntitlements(sessionReq, sessionRes, workspaceResult.id, 'session')) return;
 
       return fn(sessionReq, sessionRes, user, asWorkspace(workspaceResult));
     })(req, res);

@@ -14,9 +14,11 @@ import PullToRefresh from '@components/PullToRefresh';
 import { NextPageWithPullToRefresh } from '../types/next';
 import { OfflineContextProvider } from '@lib/context/OfflineContextProvider';
 import { OfflineBanner } from '@components/layout/OfflineBanner';
+import { AnnouncementBanner } from '@components/announcements/AnnouncementBanner';
 import { useTranslation } from 'react-i18next';
 import { initI18n } from '@lib/i18n/client';
 import { TourProvider } from '@components/tour/TourProvider';
+import { PlanBoundary } from '@components/plan/PlanBoundary';
 
 const i18n = initI18n();
 
@@ -99,9 +101,12 @@ const App = ({ Component, pageProps: { session: _session, ...pageProps } }: AppP
                       <TourProvider>
                         <AppHead />
                         <OfflineBanner />
-                        <PullToRefresh onRefresh={customRefresh}>
-                          <Component {...pageProps} />
-                        </PullToRefresh>
+                        <AnnouncementBanner />
+                        <PlanBoundary>
+                          <PullToRefresh onRefresh={customRefresh}>
+                            <Component {...pageProps} />
+                          </PullToRefresh>
+                        </PlanBoundary>
                       </TourProvider>
                     </LanguageBoundary>
                   </ThemeBoundary>

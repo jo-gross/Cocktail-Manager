@@ -28,7 +28,7 @@ function subscribeToOrientation(onStoreChange: () => void) {
 
 export default function SignagePage() {
   const router = useRouter();
-  const { t } = useTranslation(['errors', 'manage', 'common']);
+  const { t } = useTranslation(['errors', 'manage', 'common', 'plan']);
   const { id, key } = router.query;
   // Monitor key: required for PIN-protected guest menu slides (skipped without it).
   const signageKey = typeof key === 'string' ? key : '';
@@ -36,6 +36,10 @@ export default function SignagePage() {
   const format = useSyncExternalStore(subscribeToOrientation, getMonitorFormat, () => MonitorFormat.LANDSCAPE);
   const [content, setContent] = useState<SignageFormatView>();
   const [imageLoading, setImageLoading] = useState<boolean>(false);
+  // Hosted instances: the plan of the workspace does not include signage (feed answers 402).
+  const [planRequired, setPlanRequired] = useState<boolean>(false);
+  // Hosted instances: the workspace is suspended (feed answers 503).
+  const [unavailable, setUnavailable] = useState<boolean>(false);
 
   const fetchData = useCallback(
     (options?: { silent?: boolean }) => {
@@ -45,8 +49,16 @@ export default function SignagePage() {
       }
       const keyQuery = signageKey ? `&key=${encodeURIComponent(signageKey)}` : '';
       fetch(`/api/signage/${id}?format=${format}${keyQuery}`)
-        .then((response) => response.json())
-        .then((data) => {
+        .then((response) => response.json().then((data) => ({ status: response.status, data })))
+        .then(({ status, data }) => {
+          // Only the feed's own answers switch the view; any other failure (e.g. a 503 page of a reverse proxy during
+          // a restart) keeps the slides, as before.
+          const code = data?.error?.code;
+          const isUnavailable = status === 503 && code === 'WORKSPACE_UNAVAILABLE';
+          const isPlanRequired = status === 402 && code === 'PLAN_FEATURE_MISSING';
+          setUnavailable(isUnavailable);
+          setPlanRequired(isPlanRequired);
+          if (isUnavailable || isPlanRequired) return;
           setContent(data.content);
         })
         .catch((error) => {
@@ -92,6 +104,14 @@ export default function SignagePage() {
       {imageLoading ? (
         <PageCenter>
           <Loading />
+        </PageCenter>
+      ) : unavailable ? (
+        <PageCenter>
+          <p className="text-center text-xl">{t('plan:signage.unavailable')}</p>
+        </PageCenter>
+      ) : planRequired ? (
+        <PageCenter>
+          <p className="text-center text-xl">{t('plan:signage.planRequired')}</p>
         </PageCenter>
       ) : (
         <SignageSlideDisplay

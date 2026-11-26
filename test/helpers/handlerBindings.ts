@@ -18,6 +18,9 @@ import * as guides from '@lib/api/v1/guides';
 import * as guestInfo from '@lib/api/v1/guestInfo';
 import * as guestMenus from '@lib/api/v1/guestMenus';
 import * as ices from '@lib/api/v1/ices';
+import * as instance from '@lib/api/v1/instance';
+import * as instanceSupport from '@lib/api/v1/instanceSupport';
+import * as announcements from '@lib/api/v1/announcements';
 import * as ingredients from '@lib/api/v1/ingredients';
 import * as joinCodes from '@lib/api/v1/joinCodes';
 import * as joinRequests from '@lib/api/v1/joinRequests';
@@ -37,6 +40,8 @@ import * as units from '@lib/api/v1/units';
 import * as userSettings from '@lib/api/v1/userSettings';
 import * as workspace from '@lib/api/v1/workspace';
 import * as workspaceUsers from '@lib/api/v1/workspaceUsers';
+import * as entitlements from '@lib/api/v1/entitlements';
+import * as portalHandoff from '@lib/api/v1/portalHandoff';
 
 import { actionsCollectionApiDoc, actionsItemApiDoc } from '@lib/schemas/actions';
 import { adminTemplatesAccessApiDoc, adminTemplatesCloneApiDoc, adminTemplatesCollectionApiDoc, adminTemplatesItemApiDoc } from '@lib/schemas/adminTemplates';
@@ -64,7 +69,11 @@ import {
   guestMenuTemplatesItemApiDoc,
 } from '@lib/schemas/guestMenus';
 import { apiKeysCollectionApiDoc, apiKeysItemApiDoc } from '@lib/schemas/apiKeys';
+import { instanceApiDoc, instanceUsersCollectionApiDoc, instanceWorkspacesCollectionApiDoc, instanceWorkspacesItemApiDoc } from '@lib/schemas/instance';
+import { instanceUsersSessionsApiDoc, instanceWorkspacesTransferOwnershipApiDoc } from '@lib/schemas/instanceSupport';
+import { announcementsCollectionApiDoc, instanceAnnouncementsApiDoc, workspaceAnnouncementsCollectionApiDoc } from '@lib/schemas/announcements';
 import { auditLogsCollectionApiDoc } from '@lib/schemas/auditLogs';
+import { instanceDefaultEntitlementsApiDoc, instanceWorkspaceEntitlementsApiDoc, workspaceEntitlementApiDoc } from '@lib/schemas/entitlements';
 import {
   calculationGroupsAssignApiDoc,
   calculationGroupsCollectionApiDoc,
@@ -121,6 +130,7 @@ import {
 import { joinCodesCollectionApiDoc, joinCodesItemApiDoc } from '@lib/schemas/joinCodes';
 import { joinRequestsAcceptApiDoc, joinRequestsCollectionApiDoc, joinRequestsRejectApiDoc } from '@lib/schemas/joinRequests';
 import { leaveApiDoc } from '@lib/schemas/leave';
+import { portalHandoffApiDoc } from '@lib/schemas/portalHandoff';
 import { meApiDoc } from '@lib/schemas/me';
 import { queueAddApiDoc, queueCollectionApiDoc, queueItemApiDoc, queueRemoveApiDoc } from '@lib/schemas/queue';
 import { ratingsCollectionApiDoc, ratingsItemApiDoc } from '@lib/schemas/ratings';
@@ -180,9 +190,22 @@ export const handlerBindings: HandlerBinding[] = [
   { apiDoc: adminTemplatesItemApiDoc, handler: adminTemplates.itemHandler },
   { apiDoc: adminTemplatesCloneApiDoc, handler: adminTemplates.cloneHandler },
   { apiDoc: adminTemplatesAccessApiDoc, handler: adminTemplates.accessHandler },
+  { apiDoc: instanceApiDoc, handler: instance.instanceHandler },
+  { apiDoc: instanceWorkspacesCollectionApiDoc, handler: instance.workspacesCollectionHandler },
+  { apiDoc: instanceWorkspacesItemApiDoc, handler: instance.workspacesItemHandler },
+  { apiDoc: instanceUsersCollectionApiDoc, handler: instance.usersCollectionHandler },
+  { apiDoc: instanceWorkspacesTransferOwnershipApiDoc, handler: instanceSupport.transferOwnershipHandler },
+  { apiDoc: instanceUsersSessionsApiDoc, handler: instanceSupport.userSessionsHandler },
+  { apiDoc: instanceAnnouncementsApiDoc, handler: announcements.instanceAnnouncementsHandler },
+  { apiDoc: announcementsCollectionApiDoc, handler: announcements.collectionHandler },
+  { apiDoc: workspaceAnnouncementsCollectionApiDoc, handler: announcements.workspaceCollectionHandler },
   { apiDoc: apiKeysCollectionApiDoc, handler: apiKeys.collectionHandler },
   { apiDoc: apiKeysItemApiDoc, handler: apiKeys.itemHandler },
   { apiDoc: auditLogsCollectionApiDoc, handler: auditLogs.collectionHandler },
+  { apiDoc: instanceDefaultEntitlementsApiDoc, handler: entitlements.instanceDefaultHandler },
+  { apiDoc: instanceWorkspaceEntitlementsApiDoc, handler: entitlements.instanceWorkspaceHandler },
+  { apiDoc: workspaceEntitlementApiDoc, handler: entitlements.workspaceHandler },
+  { apiDoc: portalHandoffApiDoc, handler: portalHandoff.handoffHandler },
   { apiDoc: calculationsCollectionApiDoc, handler: calculations.collectionHandler },
   { apiDoc: calculationsItemApiDoc, handler: calculations.itemHandler },
   { apiDoc: calculationGroupsCollectionApiDoc, handler: calculations.groupsCollectionHandler },

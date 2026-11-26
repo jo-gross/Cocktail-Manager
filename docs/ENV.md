@@ -108,9 +108,63 @@ The `INSTANCE_MASTER_API_KEY` provides unrestricted access to all workspaces in 
 
 When set, this key can be used in the `Authorization: Bearer <key>` header to access any workspace endpoint with full permissions.
 
+The master key also authenticates the read-only instance API for a hosting control plane (`/api/v1/instance/**`, see
+[Instance API](INSTANCE-API.md)). Without the key these routes answer `401`.
+
 The `API_KEY_JWT_SECRET` is used to sign and verify JWT tokens for workspace API keys. If not set, it falls back to `BETTER_AUTH_SECRET`. For production, it's recommended to use a separate secret for API keys.
 
 The `API_KEY_REVOKED_CACHE_TTL_MINUTES` controls how long revoked API keys are cached in memory before checking the database again. This reduces database load when checking if a key is revoked. The default is 15 minutes. Set to a higher value (e.g., 30) for better performance at the cost of slightly delayed revocation propagation, or lower (e.g., 5) for faster revocation but more database queries.
+
+### Hosting / Control Plane
+
+| Variable            | Description                                                                                                  | Default | Example   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ | ------- | --------- |
+| `ENTITLEMENTS_MODE` | `off`: self-hosted, no plan limits. `managed`: the instance is hosted and a control plane manages entitlements | `off`   | `managed` |
+| `ENTITLEMENTS_FREE_WORKSPACES_PER_OWNER` | Only with `managed`: how many workspaces on the default (free) plan a user may own when creating one in the app; unset = unlimited | - | `1` |
+
+Self-hosted instances leave both unset. `ENTITLEMENTS_MODE` is reported as `entitlementsMode` by
+`GET /api/v1/instance` (see [Instance API](INSTANCE-API.md)). With `managed` the instance advertises the capabilities
+`entitlements`, `announcements` (banners pushed by the control plane) and `support.write` (ownership transfer, session
+revocation, workspace deletion) to the control plane, enforces the plan snapshots the control plane pushes (limits,
+features, workspace status) and shows the plan UI; until the first push nothing is limited. See
+[Entitlements](ENTITLEMENTS.md). Values other than `off` and `managed` (case-insensitive) count as `off` and are logged
+once at runtime as a warning. The browser reads the mode at runtime from `GET /api/config/entitlements` (public, cached
+five minutes, no database access); with `off` it requests no plan and no announcements.
+`ENTITLEMENTS_FREE_WORKSPACES_PER_OWNER` takes a non-negative integer; other values count as unlimited. It applies only
+after the control plane pushed a default snapshot.
+
+#### Customer portal ("Abo verwalten")
+
+| Variable                     | Description                                                                                                       | Default | Example                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------- | ---------------------------- |
+| `PORTAL_HANDOFF_PRIVATE_KEY` | Ed25519 private key (PKCS#8 PEM) that signs the handoff into the customer portal. **Secret.**                       | -       | see below                    |
+| `PORTAL_URL`                 | Base URL of the customer portal of the hosting provider; the app sends owners to `<PORTAL_URL>/sso?token=…`       | -       | `https://portal.example.com` |
+
+Owners of a workspace with a verified email address get "Abo verwalten" (plan card, status banner, suspended view) and
+"Upgrade" (limit dialog), which sign them in on the page of their bar in the customer portal (see
+[Entitlements](ENTITLEMENTS.md#portal-handoff)). The handoff is offered only when **all** of these hold; otherwise the
+app behaves as without the variables and self-hosted instances see nothing:
+
+- `ENTITLEMENTS_MODE=managed`
+- `PORTAL_HANDOFF_PRIVATE_KEY` is a valid Ed25519 private key
+- `PORTAL_URL` is an http(s) URL
+- the public URL of the app is set: `BETTER_AUTH_URL`, else `NEXTAUTH_URL`, else `NEXT_PUBLIC_APP_URL` (the same order
+  as the auth base URL). Its origin (scheme, host, port; no path, no default port) is the issuer (`iss`) of the token
+  and must equal the origin of the public URL registered for the instance in the backoffice ("Aussteller (iss) im
+  Token").
+
+The backoffice generates the key pair (instance detail page, "Wechsel aus der App") and shows the private key once as
+an env line. Both spellings are accepted: the PEM with real line breaks, or one line with `\n` for each line break,
+optionally in double quotes:
+
+```bash
+PORTAL_HANDOFF_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMC4CAQAw…\n-----END PRIVATE KEY-----"
+```
+
+A key made elsewhere: `openssl genpkey -algorithm ed25519 -out handoff.pem` (private key for the app) and
+`openssl pkey -in handoff.pem -pubout` (public key for the backoffice). An invalid key, an invalid `PORTAL_URL` or a
+missing public URL is logged once as a warning, never with the value. To rotate, enter the new key in the backoffice,
+then set it here and restart the app; until then handoffs fail.
 
 ### Demo Mode
 

@@ -32,6 +32,7 @@ import {
   guestMenuTemplatesItemApiDoc,
 } from '@lib/schemas/guestMenus';
 import * as guestMenus from '@lib/api/controllers/guestMenus';
+import { EXPORT_STATUS_EXEMPTION, withStatusExemption } from '@lib/entitlements/statusGate';
 
 export const collectionHandler = defineApiHandlers(guestMenusCollectionApiDoc.operations, {
   GET: ({ workspace, user, req }) => guestMenus.listGuestMenus(workspace, user, getRequestApiKeyPermissions(req)),
@@ -123,7 +124,7 @@ function sendPdf(res: NextApiResponse, buffer: Buffer, fileName: string) {
   return res.status(200).send(buffer);
 }
 
-export const exportPdfHandler = withCors(
+const exportPdfRoutes = withCors(
   withHttpMethods({
     [HTTPMethod.POST]: withWorkspacePermission(
       [Role.USER],
@@ -143,8 +144,10 @@ export const exportPdfHandler = withCors(
   }),
   ['POST'],
 );
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const exportPdfHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, exportPdfRoutes);
 
-export const exportHtmlHandler = withCors(
+const exportHtmlRoutes = withCors(
   withHttpMethods({
     [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GUEST_MENUS_READ, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
       const menuId = req.query.menuId as string | undefined;
@@ -170,8 +173,10 @@ export const exportHtmlHandler = withCors(
   }),
   ['GET'],
 );
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const exportHtmlHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, exportHtmlRoutes);
 
-export const tableTentHandler = withCors(
+const tableTentRoutes = withCors(
   withHttpMethods({
     [HTTPMethod.GET]: withWorkspacePermission([Role.USER], Permission.GUEST_MENUS_READ, async (req: NextApiRequest, res: NextApiResponse, _user, workspace) => {
       const menuId = req.query.menuId as string | undefined;
@@ -187,6 +192,8 @@ export const tableTentHandler = withCors(
   }),
   ['GET'],
 );
+// Exports stay available in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const tableTentHandler = withStatusExemption(EXPORT_STATUS_EXEMPTION, tableTentRoutes);
 
 export const activeExtrasHandler = defineApiHandlers(guestMenusActiveExtrasApiDoc.operations, {
   GET: ({ workspace, query }) => guestMenus.getActiveGuestMenuExtras(workspace, query.cardId),

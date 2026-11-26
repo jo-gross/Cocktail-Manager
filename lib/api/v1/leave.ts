@@ -6,7 +6,10 @@
 import { leaveApiDoc } from '@lib/schemas/leave';
 import { defineApiHandlers } from '@lib/openapi/apiDoc';
 import * as leave from '@lib/api/controllers/leave';
+import { ALWAYS_AVAILABLE, withStatusExemption } from '@lib/entitlements/statusGate';
 
-export const leaveHandler = defineApiHandlers(leaveApiDoc.operations, {
+const leaveRoutes = defineApiHandlers(leaveApiDoc.operations, {
   POST: ({ workspace, user }) => leave.leaveWorkspace(workspace, user),
 });
+// Leaving stays possible in a read-only or suspended workspace (docs/ENTITLEMENTS.md "Status").
+export const leaveHandler = withStatusExemption({ POST: ALWAYS_AVAILABLE }, leaveRoutes);

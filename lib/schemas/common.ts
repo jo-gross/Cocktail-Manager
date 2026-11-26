@@ -43,3 +43,12 @@ export const dataEnvelope = <T extends z.ZodTypeAny>(schema: T) => z.object({ da
 
 /** Wrap a payload schema in the standard { data, pagination } envelope. */
 export const paginatedEnvelope = <T extends z.ZodTypeAny>(schema: T) => z.object({ data: schema, pagination: PaginationMeta });
+
+export const CursorPaginationMeta = z
+  .object({
+    nextCursor: z.string().nullable().openapi({ description: 'Opaque cursor for the next page, null on the last page.' }),
+  })
+  .openapi('CursorPagination');
+
+/** Wrap a payload schema in the cursor-paginated { data, pagination: { nextCursor } } envelope. */
+export const cursorPaginatedEnvelope = <T extends z.ZodTypeAny>(schema: T) => z.object({ data: schema, pagination: CursorPaginationMeta });
